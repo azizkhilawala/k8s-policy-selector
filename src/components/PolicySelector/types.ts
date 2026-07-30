@@ -1,12 +1,4 @@
 export type SelectorSide = 'source' | 'destination';
-export type K8sScope = 'namespace' | 'workload';
-export type K8sOperator = 'eq' | 'exists' | 'neq' | 'in' | 'notin' | 'notexists';
-
-export interface K8sExpression {
-  key: string;
-  operator: K8sOperator;
-  values: string[]; // empty for 'exists' and 'notexists'
-}
 
 export type ClusterRef =
   | {type: 'id'; id: string}
@@ -23,10 +15,11 @@ export interface PortRange {
 
 // ── Selector value types ──────────────────────────────────────────────────────
 
+// K8s Labels: each label is a key=value string (e.g. "app=frontend", "env=production")
+// Same-key selections are OR'd; different keys are AND'd
 export interface K8sLabelsValue {
   category: 'k8s_labels';
-  clusters: ClusterRef[];
-  expressions: K8sExpression[];
+  labels: string[];
 }
 
 export interface K8sNamespaceValue {
@@ -41,7 +34,6 @@ export interface K8sClusterValue {
 
 export interface K8sServiceAccountValue {
   category: 'k8s_service_account';
-  clusters: ClusterRef[];
   serviceAccounts: string[];
 }
 
@@ -52,19 +44,16 @@ export interface FqdnValue {
 
 export interface K8sServiceValue {
   category: 'k8s_service';
-  clusters: ClusterRef[];
   names: string[];
 }
 
 export interface K8sIngressValue {
   category: 'k8s_ingress';
-  clusters: ClusterRef[];
   names: string[];
 }
 
 export interface K8sGatewayValue {
   category: 'k8s_gateway';
-  clusters: ClusterRef[];
   names: string[];
 }
 
@@ -100,19 +89,14 @@ export interface CloudAzureVnetValue {
 
 export interface CloudAzureSubnetValue {
   category: 'cloud_azure_subnet';
-  resourceIds: string[]; // full Azure resource ID
+  resourceIds: string[];
 }
 
-export type IllumioDimension = 'role' | 'app' | 'env' | 'loc';
-
-export interface IllumioLabelEntry {
-  dimension: IllumioDimension;
-  value: string;
-}
-
+// Illumio Labels: each label is a Dimension:Value string (e.g. "Role:web", "Env:Production")
+// Same-dimension selections are OR'd; different dimensions are AND'd
 export interface IllumioLabelsValue {
   category: 'illumio_labels';
-  labels: IllumioLabelEntry[];
+  labels: string[];
 }
 
 export type SelectorValue =

@@ -1,12 +1,8 @@
 import type {PowerSearchConfig} from '@astryxdesign/core/PowerSearch';
-import K8sExpressionEditor, {k8sEditorGetString} from './K8sExpressionEditor';
 import CloudResourceEditor, {cloudResourceGetString} from './CloudResourceEditor';
 import PortRangeEditor, {portRangeGetString} from './PortRangeEditor';
-import IllumioLabelEditor, {illumioEditorGetString} from './IllumioLabelEditor';
 import type {SelectorSide} from './types';
 
-// Wrap CloudResourceEditor to bind the category prop (CustomOperatorValue.Editor
-// only receives isDisabled, onChange, placeholder, value).
 function makeCloudEditor(category: Parameters<typeof cloudResourceGetString>[1]) {
   return {
     type: 'custom' as const,
@@ -16,7 +12,27 @@ function makeCloudEditor(category: Parameters<typeof cloudResourceGetString>[1])
   };
 }
 
-// Rich suggestion lists for searchable categories
+function makeSuggestionStringList(suggestions: string[]) {
+  return {
+    type: 'string_list' as const,
+    isArbitraryStringAllowed: true,
+    suggestions: suggestions.map(s => ({id: s, label: s})),
+  };
+}
+
+// ── K8s Labels: key=value pairs ───────────────────────────────────────────────
+// Same key → OR, different key → AND
+const K8S_LABEL_SUGGESTIONS = [
+  'app=frontend', 'app=backend', 'app=api', 'app=worker', 'app=scheduler',
+  'env=production', 'env=staging', 'env=development', 'env=qa',
+  'tier=web', 'tier=api', 'tier=database', 'tier=cache', 'tier=queue',
+  'version=v1', 'version=v2', 'version=stable', 'version=canary',
+  'component=controller', 'component=proxy', 'component=agent',
+  'release=stable', 'release=beta',
+  'region=us-east-1', 'region=us-west-2', 'region=eu-west-1',
+];
+
+// ── K8s Namespace ─────────────────────────────────────────────────────────────
 const K8S_NAMESPACE_SUGGESTIONS = [
   'default', 'kube-system', 'kube-public', 'kube-node-lease',
   'production', 'staging', 'development', 'qa', 'sandbox',
@@ -24,12 +40,14 @@ const K8S_NAMESPACE_SUGGESTIONS = [
   'istio-system', 'argocd', 'flux-system',
 ];
 
+// ── K8s Cluster ───────────────────────────────────────────────────────────────
 const K8S_CLUSTER_SUGGESTIONS = [
   'prod-us-east-1', 'prod-us-west-2', 'prod-eu-west-1',
   'staging-us-east-1', 'staging-eu-west-1',
   'dev-cluster', 'qa-cluster', 'dr-cluster',
 ];
 
+// ── Service Account ───────────────────────────────────────────────────────────
 const K8S_SERVICE_ACCOUNT_SUGGESTIONS = [
   'default', 'kube-dns', 'coredns', 'metrics-server',
   'prometheus', 'grafana', 'fluentd', 'filebeat',
@@ -37,30 +55,33 @@ const K8S_SERVICE_ACCOUNT_SUGGESTIONS = [
   'vault', 'external-secrets', 'cluster-autoscaler',
 ];
 
+// ── IP List ───────────────────────────────────────────────────────────────────
+const IP_LIST_SUGGESTIONS = [
+  '10.0.0.0/8', '10.0.0.0/16', '10.0.1.0/24',
+  '192.168.0.0/16', '192.168.1.0/24',
+  '172.16.0.0/12', '172.16.0.0/16',
+  '100.64.0.0/10', '0.0.0.0/0',
+];
+
+// ── AWS Account ───────────────────────────────────────────────────────────────
+const AWS_ACCOUNT_SUGGESTIONS = [
+  '123456789012', '234567890123', '345678901234',
+  'prod-account', 'staging-account', 'dev-account',
+];
+
+// ── Azure Subscription ────────────────────────────────────────────────────────
+const AZURE_SUBSCRIPTION_SUGGESTIONS = [
+  'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx',
+  'prod-subscription', 'staging-subscription', 'dev-subscription',
+];
+
+// ── Destination-only ──────────────────────────────────────────────────────────
 const FQDN_SUGGESTIONS = [
   '*.amazonaws.com', '*.s3.amazonaws.com', '*.execute-api.amazonaws.com',
   '*.azure.com', '*.blob.core.windows.net', '*.azurewebsites.net',
   '*.googleapis.com', '*.storage.googleapis.com',
   'api.example.com', 'auth.example.com', 'cdn.example.com',
   '*.internal', 'elasticsearch.logging.svc.cluster.local',
-];
-
-const IP_LIST_SUGGESTIONS = [
-  '10.0.0.0/8', '10.0.0.0/16', '10.0.1.0/24',
-  '192.168.0.0/16', '192.168.1.0/24',
-  '172.16.0.0/12', '172.16.0.0/16',
-  '100.64.0.0/10',
-  '0.0.0.0/0',
-];
-
-const AWS_ACCOUNT_SUGGESTIONS = [
-  '123456789012', '234567890123', '345678901234',
-  'prod-account', 'staging-account', 'dev-account',
-];
-
-const AZURE_SUBSCRIPTION_SUGGESTIONS = [
-  'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx',
-  'prod-subscription', 'staging-subscription', 'dev-subscription',
 ];
 
 const K8S_SERVICE_SUGGESTIONS = [
@@ -80,31 +101,29 @@ const K8S_GATEWAY_SUGGESTIONS = [
   'kong-gateway', 'nginx-gateway', 'envoy-gateway',
 ];
 
-function makeSuggestionStringList(suggestions: string[]) {
-  return {
-    type: 'string_list' as const,
-    isArbitraryStringAllowed: true,
-    suggestions: suggestions.map(s => ({id: s, label: s})),
-  };
-}
+// ── Illumio Labels: Dimension:Value pairs ─────────────────────────────────────
+// Same dimension → OR, different dimension → AND
+const ILLUMIO_LABEL_SUGGESTIONS = [
+  'Role:web', 'Role:api', 'Role:database', 'Role:cache', 'Role:worker', 'Role:queue', 'Role:proxy', 'Role:monitoring',
+  'App:frontend', 'App:backend', 'App:auth-service', 'App:payment', 'App:inventory', 'App:notification', 'App:analytics', 'App:search',
+  'Env:Production', 'Env:Staging', 'Env:Development', 'Env:QA', 'Env:DR', 'Env:Sandbox',
+  'Loc:us-east-1', 'Loc:us-west-2', 'Loc:eu-west-1', 'Loc:ap-southeast-1', 'Loc:datacenter-nyc', 'Loc:datacenter-london',
+];
 
 export function buildSelectorConfig(side: SelectorSide): PowerSearchConfig {
   const isDestination = side === 'destination';
 
   const fields: Array<PowerSearchConfig['fields'][number]> = [
-    // ── K8s Labels — full expression builder ─────────────────────────────────
     {
       key: 'k8s_labels',
       label: 'K8s Labels',
-      defaultOperator: 'expr',
+      defaultOperator: 'is_any',
       operators: [{
-        key: 'expr',
-        label: 'matches',
-        value: {type: 'custom' as const, Editor: K8sExpressionEditor, getString: k8sEditorGetString},
+        key: 'is_any',
+        label: 'includes',
+        value: makeSuggestionStringList(K8S_LABEL_SUGGESTIONS),
       }],
     },
-
-    // ── K8s Namespace — searchable with rich examples ─────────────────────────
     {
       key: 'k8s_namespace',
       label: 'K8s Namespace',
@@ -127,8 +146,6 @@ export function buildSelectorConfig(side: SelectorSide): PowerSearchConfig {
         },
       ],
     },
-
-    // ── K8s Cluster — searchable cluster name picker ──────────────────────────
     {
       key: 'k8s_cluster',
       label: 'K8s Cluster',
@@ -146,8 +163,6 @@ export function buildSelectorConfig(side: SelectorSide): PowerSearchConfig {
         },
       ],
     },
-
-    // ── Service Account — searchable ──────────────────────────────────────────
     {
       key: 'k8s_service_account',
       label: 'Service Account',
@@ -165,8 +180,6 @@ export function buildSelectorConfig(side: SelectorSide): PowerSearchConfig {
         },
       ],
     },
-
-    // ── IP List — searchable CIDR ranges ─────────────────────────────────────
     {
       key: 'ip_list',
       label: 'IP List',
@@ -184,8 +197,6 @@ export function buildSelectorConfig(side: SelectorSide): PowerSearchConfig {
         },
       ],
     },
-
-    // ── AWS Account ───────────────────────────────────────────────────────────
     {
       key: 'cloud_aws_account',
       label: 'AWS Account',
@@ -203,32 +214,18 @@ export function buildSelectorConfig(side: SelectorSide): PowerSearchConfig {
         },
       ],
     },
-
-    // ── AWS VPC ───────────────────────────────────────────────────────────────
     {
       key: 'cloud_aws_vpc',
       label: 'AWS VPC',
       defaultOperator: 'is',
-      operators: [{
-        key: 'is',
-        label: 'is',
-        value: makeCloudEditor('cloud_aws_vpc'),
-      }],
+      operators: [{key: 'is', label: 'is', value: makeCloudEditor('cloud_aws_vpc')}],
     },
-
-    // ── AWS Subnet ────────────────────────────────────────────────────────────
     {
       key: 'cloud_aws_subnet',
       label: 'AWS Subnet',
       defaultOperator: 'is',
-      operators: [{
-        key: 'is',
-        label: 'is',
-        value: makeCloudEditor('cloud_aws_subnet'),
-      }],
+      operators: [{key: 'is', label: 'is', value: makeCloudEditor('cloud_aws_subnet')}],
     },
-
-    // ── Azure Subscription ────────────────────────────────────────────────────
     {
       key: 'cloud_azure_subscription',
       label: 'Azure Subscription',
@@ -246,45 +243,30 @@ export function buildSelectorConfig(side: SelectorSide): PowerSearchConfig {
         },
       ],
     },
-
-    // ── Azure VNet ────────────────────────────────────────────────────────────
     {
       key: 'cloud_azure_vnet',
       label: 'Azure VNet',
       defaultOperator: 'is',
-      operators: [{
-        key: 'is',
-        label: 'is',
-        value: makeCloudEditor('cloud_azure_vnet'),
-      }],
+      operators: [{key: 'is', label: 'is', value: makeCloudEditor('cloud_azure_vnet')}],
     },
-
-    // ── Azure Subnet ──────────────────────────────────────────────────────────
     {
       key: 'cloud_azure_subnet',
       label: 'Azure Subnet',
       defaultOperator: 'is',
-      operators: [{
-        key: 'is',
-        label: 'is',
-        value: makeCloudEditor('cloud_azure_subnet'),
-      }],
+      operators: [{key: 'is', label: 'is', value: makeCloudEditor('cloud_azure_subnet')}],
     },
-
-    // ── Illumio Labels — 4-dimension model with real example values ───────────
     {
       key: 'illumio_labels',
       label: 'Illumio Labels',
-      defaultOperator: 'is',
+      defaultOperator: 'is_any',
       operators: [{
-        key: 'is',
-        label: 'is',
-        value: {type: 'custom' as const, Editor: IllumioLabelEditor, getString: illumioEditorGetString},
+        key: 'is_any',
+        label: 'includes',
+        value: makeSuggestionStringList(ILLUMIO_LABEL_SUGGESTIONS),
       }],
     },
   ];
 
-  // Destination-only fields
   if (isDestination) {
     fields.push(
       {
