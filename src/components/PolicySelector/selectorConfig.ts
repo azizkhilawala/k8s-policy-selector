@@ -122,17 +122,31 @@ export function buildSelectorConfig(side: SelectorSide): PowerSearchConfig {
     {
       key: 'k8s_namespace',
       label: 'K8s Namespace',
-      defaultOperator: 'select',
-      operators: [{
-        key: 'select',
-        label: 'matches',
-        value: {
-          type: 'custom' as const,
-          Editor: (props: {isDisabled?: boolean; onChange: (v: string | null) => void; placeholder: string; value: string | null}) =>
-            K8sNamespaceEditor(props),
-          getString: (v: string) => namespaceGetString(v),
-        },
-      }],
+      defaultOperator: 'by_name',
+      operators: (
+        ['by_name', 'by_label', 'wildcard', 'intra'] as const
+      ).map(mode => {
+        const modeLabels = {
+          by_name: 'is any of',
+          by_label: 'matches label',
+          wildcard: 'any namespace',
+          intra: 'same namespace',
+        };
+        const nsMode = mode === 'by_name' ? 'name'
+          : mode === 'by_label' ? 'label'
+          : mode === 'wildcard' ? 'wildcard'
+          : 'intra';
+        return {
+          key: mode,
+          label: modeLabels[mode],
+          value: {
+            type: 'custom' as const,
+            Editor: (props: {isDisabled?: boolean; onChange: (v: string | null) => void; placeholder: string; value: string | null}) =>
+              K8sNamespaceEditor({...props, mode: nsMode}),
+            getString: (v: string) => namespaceGetString(v),
+          },
+        };
+      }),
     },
     {
       key: 'k8s_cluster',

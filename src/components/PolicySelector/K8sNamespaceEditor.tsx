@@ -1,4 +1,4 @@
-import {useState} from 'react';
+import {useState, useRef, useEffect} from 'react';
 import {Button} from '@astryxdesign/core/Button';
 import {TextInput} from '@astryxdesign/core/TextInput';
 import {Selector} from '@astryxdesign/core/Selector';
@@ -51,7 +51,7 @@ export function namespaceGetString(value: string): string {
   }
 }
 
-// ── Label suggestions ─────────────────────────────────────────────────────────
+// ── Suggestions ───────────────────────────────────────────────────────────────
 
 const COMMON_LABEL_KEYS = [
   'kubernetes.io/metadata.name', 'env', 'store', 'region', 'team',
@@ -70,6 +70,11 @@ const COMMON_LABEL_VALUES: Record<string, string[]> = {
   ],
 };
 
+export const K8S_NAMESPACE_NAMES = [
+  'default', 'kube-system', 'production', 'staging', 'development',
+  'qa', 'monitoring', 'logging', 'ingress-nginx', 'payments', 'checkout',
+];
+
 const OPERATOR_OPTIONS: {value: K8sNamespaceLabelOperator; label: string}[] = [
   {value: 'In', label: 'In (any of)'},
   {value: 'NotIn', label: 'Not In (none of)'},
@@ -78,21 +83,60 @@ const OPERATOR_OPTIONS: {value: K8sNamespaceLabelOperator; label: string}[] = [
   {value: 'DoesNotExist', label: 'Does Not Exist (key absent)'},
 ];
 
-const MODE_OPTIONS: {value: K8sNamespaceMode; label: string}[] = [
-  {value: 'name', label: 'By Name'},
-  {value: 'label', label: 'By Label'},
-  {value: 'wildcard', label: 'Any Namespace'},
-  {value: 'intra', label: 'Same Namespace'},
-];
+// ── Dropdown — escapes overflow:hidden via position:fixed ─────────────────────
 
-// ── Sub-components ────────────────────────────────────────────────────────────
+interface DropdownProps {
+  items: string[];
+  onSelect: (v: string) => void;
+  anchorRef: React.RefObject<HTMLElement | null>;
+}
 
-function TagInput({
-  values,
-  suggestions,
-  onChange,
-  isDisabled,
-}: {
+function Dropdown({items, onSelect, anchorRef}: DropdownProps) {
+  const [rect, setRect] = useState<DOMRect | null>(null);
+
+  useEffect(() => {
+    if (anchorRef.current) setRect(anchorRef.current.getBoundingClientRect());
+  }, [anchorRef]);
+
+  if (!rect || items.length === 0) return null;
+
+  return (
+    <ul
+      style={{
+        position: 'fixed',
+        top: rect.bottom + 2,
+        left: rect.left,
+        width: rect.width,
+        zIndex: 9999,
+        margin: 0,
+        padding: 0,
+        listStyle: 'none',
+        background: 'var(--color-background-primary)',
+        border: '1px solid var(--color-border-default)',
+        borderRadius: 'var(--border-radius-md)',
+        boxShadow: '0 4px 16px rgba(0,0,0,0.14)',
+        maxHeight: '220px',
+        overflowY: 'auto',
+      }}
+    >
+      {items.map(s => (
+        <li
+          key={s}
+          onMouseDown={() => onSelect(s)}
+          style={{padding: '8px 12px', cursor: 'pointer', fontSize: '0.875rem', color: 'var(--color-text-primary)'}}
+          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--color-background-secondary)'; }}
+          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
+        >
+          {s}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+// ── TagInput ──────────────────────────────────────────────────────────────────
+
+function TagInput({values, suggestions, onChange, isDisabled}: {
   values: string[];
   suggestions: string[];
   onChange: (v: string[]) => void;
@@ -100,6 +144,7 @@ function TagInput({
 }) {
   const [input, setInput] = useState('');
   const [open, setOpen] = useState(false);
+  const wrapRef = useRef<HTMLDivElement>(null);
 
   const commit = (raw: string) => {
     const val = raw.trim();
@@ -117,33 +162,26 @@ function TagInput({
       {values.length > 0 && (
         <div style={{display: 'flex', flexWrap: 'wrap', gap: 'var(--spacing-1)'}}>
           {values.map(v => (
-            <span
-              key={v}
-              style={{
-                display: 'inline-flex', alignItems: 'center', gap: '4px',
-                padding: '2px 8px',
-                background: 'var(--color-background-secondary)',
-                borderRadius: 'var(--border-radius-sm)',
-                fontSize: '0.8125rem',
-                color: 'var(--color-text-primary)',
-              }}
-            >
+            <span key={v} style={{
+              display: 'inline-flex', alignItems: 'center', gap: '4px',
+              padding: '2px 8px',
+              background: 'var(--color-background-secondary)',
+              borderRadius: 'var(--border-radius-sm)',
+              fontSize: '0.8125rem', color: 'var(--color-text-primary)',
+            }}>
               {v}
               {!isDisabled && (
                 <button
                   aria-label={`Remove ${v}`}
                   onClick={() => onChange(values.filter(x => x !== v))}
-                  style={{
-                    border: 'none', background: 'none', cursor: 'pointer',
-                    color: 'var(--color-text-secondary)', padding: 0, lineHeight: 1,
-                  }}
+                  style={{border: 'none', background: 'none', cursor: 'pointer', color: 'var(--color-text-secondary)', padding: 0, lineHeight: 1}}
                 >×</button>
               )}
             </span>
           ))}
         </div>
       )}
-      <div style={{position: 'relative'}}>
+      <div ref={wrapRef}>
         <TextInput
           label=""
           value={input}
@@ -157,66 +195,29 @@ function TagInput({
             if (e.key === 'Escape') setOpen(false);
           }}
         />
-        {open && filtered.length > 0 && (
-          <ul
-            style={{
-              position: 'absolute',
-              top: '100%',
-              left: 0,
-              right: 0,
-              zIndex: 100,
-              margin: '2px 0 0',
-              padding: 0,
-              listStyle: 'none',
-              background: 'var(--color-background-primary)',
-              border: '1px solid var(--color-border-default)',
-              borderRadius: 'var(--border-radius-md)',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.12)',
-              maxHeight: '200px',
-              overflowY: 'auto',
-            }}
-          >
-            {filtered.map(s => (
-              <li
-                key={s}
-                onMouseDown={() => commit(s)}
-                style={{
-                  padding: '8px 12px',
-                  cursor: 'pointer',
-                  fontSize: '0.875rem',
-                  color: 'var(--color-text-primary)',
-                }}
-                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--color-background-secondary)'; }}
-                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
-              >
-                {s}
-              </li>
-            ))}
-          </ul>
-        )}
+        {open && <Dropdown items={filtered} onSelect={commit} anchorRef={wrapRef} />}
       </div>
     </div>
   );
 }
 
-function KeyInput({
-  value,
-  suggestions,
-  onChange,
-  isDisabled,
-}: {
+// ── KeyInput ──────────────────────────────────────────────────────────────────
+
+function KeyInput({value, suggestions, onChange, isDisabled}: {
   value: string;
   suggestions: string[];
   onChange: (v: string) => void;
   isDisabled?: boolean;
 }) {
   const [open, setOpen] = useState(false);
+  const wrapRef = useRef<HTMLDivElement>(null);
+
   const filtered = suggestions.filter(
     s => value === '' || s.toLowerCase().includes(value.toLowerCase()),
   );
 
   return (
-    <div style={{position: 'relative'}}>
+    <div ref={wrapRef}>
       <TextInput
         label="Label key"
         value={value}
@@ -227,54 +228,14 @@ function KeyInput({
         onBlur={() => setTimeout(() => setOpen(false), 150)}
         onKeyDown={(e: React.KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); }}
       />
-      {open && filtered.length > 0 && (
-        <ul
-          style={{
-            position: 'absolute',
-            top: '100%',
-            left: 0,
-            right: 0,
-            zIndex: 100,
-            margin: '2px 0 0',
-            padding: 0,
-            listStyle: 'none',
-            background: 'var(--color-background-primary)',
-            border: '1px solid var(--color-border-default)',
-            borderRadius: 'var(--border-radius-md)',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.12)',
-            maxHeight: '200px',
-            overflowY: 'auto',
-          }}
-        >
-          {filtered.map(s => (
-            <li
-              key={s}
-              onMouseDown={() => { onChange(s); setOpen(false); }}
-              style={{
-                padding: '8px 12px',
-                cursor: 'pointer',
-                fontSize: '0.875rem',
-                color: 'var(--color-text-primary)',
-              }}
-              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--color-background-secondary)'; }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
-            >
-              {s}
-            </li>
-          ))}
-        </ul>
-      )}
+      {open && <Dropdown items={filtered} onSelect={v => { onChange(v); setOpen(false); }} anchorRef={wrapRef} />}
     </div>
   );
 }
 
-function LabelExpressionRow({
-  expr,
-  onChange,
-  onRemove,
-  isDisabled,
-  showRemove,
-}: {
+// ── LabelExpressionRow ────────────────────────────────────────────────────────
+
+function LabelExpressionRow({expr, onChange, onRemove, isDisabled, showRemove}: {
   expr: K8sNamespaceLabelExpression;
   onChange: (e: K8sNamespaceLabelExpression) => void;
   onRemove: () => void;
@@ -285,19 +246,14 @@ function LabelExpressionRow({
   const valueSuggestions = COMMON_LABEL_VALUES[expr.key] ?? [];
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 'var(--spacing-2)',
-        padding: 'var(--spacing-3)',
-        background: 'var(--color-background-secondary)',
-        borderRadius: 'var(--border-radius-md)',
-        border: '1px solid var(--color-border-default)',
-      }}
-    >
+    <div style={{
+      display: 'flex', flexDirection: 'column', gap: 'var(--spacing-2)',
+      padding: 'var(--spacing-3)',
+      background: 'var(--color-background-secondary)',
+      borderRadius: 'var(--border-radius-md)',
+      border: '1px solid var(--color-border-default)',
+    }}>
       <div style={{display: 'flex', gap: 'var(--spacing-2)', alignItems: 'flex-end'}}>
-        {/* Key */}
         <div style={{flex: 1}}>
           <KeyInput
             value={expr.key}
@@ -306,8 +262,6 @@ function LabelExpressionRow({
             isDisabled={isDisabled}
           />
         </div>
-
-        {/* Operator */}
         <div style={{flexBasis: '180px'}}>
           <Selector
             label="Operator"
@@ -317,18 +271,14 @@ function LabelExpressionRow({
             isDisabled={isDisabled}
           />
         </div>
-
         {showRemove && (
           <Button label="Remove" variant="tertiary" onClick={onRemove} isDisabled={isDisabled} />
         )}
       </div>
 
-      {/* Values — only for In / NotIn / Equals */}
       {needsValues && (
         <div>
-          <Text size="sm" color="secondary">
-            {expr.operator === 'Equals' ? 'Value' : 'Values'}
-          </Text>
+          <Text size="sm" color="secondary">{expr.operator === 'Equals' ? 'Value' : 'Values'}</Text>
           {expr.operator === 'Equals' ? (
             <TextInput
               label=""
@@ -341,7 +291,7 @@ function LabelExpressionRow({
             <TagInput
               values={expr.values}
               suggestions={valueSuggestions}
-              onChange={values => onChange({...expr, values})}
+              onChange={vals => onChange({...expr, values: vals})}
               isDisabled={isDisabled}
             />
           )}
@@ -357,124 +307,101 @@ function LabelExpressionRow({
   );
 }
 
-// ── Main editor ───────────────────────────────────────────────────────────────
+// ── Main editor — mode is passed in as a locked prop from selectorConfig ───────
 
 interface Props {
+  mode: K8sNamespaceMode;
   isDisabled?: boolean;
   onChange: (value: string | null) => void;
   placeholder: string;
   value: string | null;
 }
 
-export default function K8sNamespaceEditor({isDisabled, onChange, value}: Props) {
-  const [state, setState] = useState<K8sNamespaceEditorValue>(() => deserializeNamespace(value));
+export default function K8sNamespaceEditor({mode, isDisabled, onChange, value}: Props) {
+  const [state, setState] = useState<K8sNamespaceEditorValue>(() => ({
+    ...deserializeNamespace(value),
+    mode, // lock to the operator's mode
+  }));
+
+  // Keep mode in sync if the operator changes while an existing value is present
+  useEffect(() => {
+    if (state.mode !== mode) {
+      const next = {...state, mode};
+      setState(next);
+      onChange(serializeNamespace(next));
+    }
+  }, [mode]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const emit = (next: K8sNamespaceEditorValue) => {
     setState(next);
     onChange(serializeNamespace(next));
   };
 
-  const setMode = (mode: K8sNamespaceMode) => emit({...state, mode});
-
   const addExpression = () =>
-    emit({
-      ...state,
-      labelExpressions: [
-        ...state.labelExpressions,
-        {key: '', operator: 'In', values: []},
-      ],
-    });
+    emit({...state, labelExpressions: [...state.labelExpressions, {key: '', operator: 'In', values: []}]});
 
   const updateExpression = (i: number, expr: K8sNamespaceLabelExpression) =>
-    emit({
-      ...state,
-      labelExpressions: state.labelExpressions.map((e, idx) => (idx === i ? expr : e)),
-    });
+    emit({...state, labelExpressions: state.labelExpressions.map((e, idx) => idx === i ? expr : e)});
 
   const removeExpression = (i: number) =>
-    emit({
-      ...state,
-      labelExpressions: state.labelExpressions.filter((_, idx) => idx !== i),
-    });
+    emit({...state, labelExpressions: state.labelExpressions.filter((_, idx) => idx !== i)});
 
-  const K8S_NAMESPACE_NAMES = [
-    'default', 'kube-system', 'production', 'staging', 'development',
-    'qa', 'monitoring', 'logging', 'ingress-nginx', 'payments', 'checkout',
-  ];
+  if (mode === 'wildcard') {
+    return (
+      <div style={{padding: 'var(--spacing-2)'}}>
+        <Text size="sm" color="secondary">
+          Matches all namespaces — equivalent to <code>namespaceSelector: {'{}'}</code> in Kubernetes.
+        </Text>
+      </div>
+    );
+  }
 
-  return (
-    <div style={{display: 'flex', flexDirection: 'column', gap: 'var(--spacing-3)', padding: 'var(--spacing-2)'}}>
-      {/* Mode selector */}
-      <Selector
-        label="Selection mode"
-        value={state.mode}
-        options={MODE_OPTIONS}
-        onChange={m => setMode(m as K8sNamespaceMode)}
-        isDisabled={isDisabled}
-      />
+  if (mode === 'intra') {
+    return (
+      <div style={{padding: 'var(--spacing-2)'}}>
+        <Text size="sm" color="secondary">
+          Matches only pods within the same namespace as this policy. No namespace selector is added.
+        </Text>
+      </div>
+    );
+  }
 
-      {/* By Name */}
-      {state.mode === 'name' && (
+  if (mode === 'name') {
+    return (
+      <div style={{padding: 'var(--spacing-2)'}}>
         <TagInput
           values={state.names}
           suggestions={K8S_NAMESPACE_NAMES}
           onChange={names => emit({...state, names})}
           isDisabled={isDisabled}
         />
-      )}
+      </div>
+    );
+  }
 
-      {/* By Label */}
-      {state.mode === 'label' && (
-        <div style={{display: 'flex', flexDirection: 'column', gap: 'var(--spacing-2)'}}>
-          {state.labelExpressions.length === 0 && (
-            <Text size="sm" color="secondary">
-              Add at least one label expression to match namespaces.
-            </Text>
-          )}
-          {state.labelExpressions.map((expr, i) => (
-            <div key={i}>
-              {i > 0 && (
-                <div style={{
-                  textAlign: 'center',
-                  fontSize: '0.75rem',
-                  fontWeight: 600,
-                  color: 'var(--color-text-secondary)',
-                  padding: 'var(--spacing-1) 0',
-                }}>
-                  AND
-                </div>
-              )}
-              <LabelExpressionRow
-                expr={expr}
-                onChange={e => updateExpression(i, e)}
-                onRemove={() => removeExpression(i)}
-                isDisabled={isDisabled}
-                showRemove={state.labelExpressions.length > 1}
-              />
+  // mode === 'label'
+  return (
+    <div style={{display: 'flex', flexDirection: 'column', gap: 'var(--spacing-2)', padding: 'var(--spacing-2)'}}>
+      {state.labelExpressions.length === 0 && (
+        <Text size="sm" color="secondary">Add at least one label expression to match namespaces.</Text>
+      )}
+      {state.labelExpressions.map((expr, i) => (
+        <div key={i}>
+          {i > 0 && (
+            <div style={{textAlign: 'center', fontSize: '0.75rem', fontWeight: 600, color: 'var(--color-text-secondary)', padding: 'var(--spacing-1) 0'}}>
+              AND
             </div>
-          ))}
-          <Button
-            label="+ Add label expression"
-            variant="tertiary"
-            onClick={addExpression}
+          )}
+          <LabelExpressionRow
+            expr={expr}
+            onChange={e => updateExpression(i, e)}
+            onRemove={() => removeExpression(i)}
             isDisabled={isDisabled}
+            showRemove={state.labelExpressions.length > 1}
           />
         </div>
-      )}
-
-      {/* Wildcard */}
-      {state.mode === 'wildcard' && (
-        <Text size="sm" color="secondary">
-          Matches all namespaces — equivalent to <code>namespaceSelector: {'{}'}</code> in Kubernetes.
-        </Text>
-      )}
-
-      {/* Intra-namespace */}
-      {state.mode === 'intra' && (
-        <Text size="sm" color="secondary">
-          Matches only pods within the same namespace as this policy — no namespace selector is added to the expression.
-        </Text>
-      )}
+      ))}
+      <Button label="+ Add label expression" variant="tertiary" onClick={addExpression} isDisabled={isDisabled} />
     </div>
   );
 }
