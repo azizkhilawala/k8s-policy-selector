@@ -25,6 +25,7 @@ export default function SelectorPowerSearch({
   const config = useMemo(() => buildSelectorConfig(side), [side]);
   const [pendingFilters, setPendingFilters] = useState<ReadonlyArray<PowerSearchFilter> | null>(null);
   const [conflictWarning, setConflictWarning] = useState<string | null>(null);
+  const [conflictKeys, setConflictKeys] = useState<string[]>([]);
 
   const handleChange = (newFilters: ReadonlyArray<PowerSearchFilter>, changeType: 'add' | 'edit' | 'remove', index: number) => {
     if (changeType !== 'add') {
@@ -40,6 +41,7 @@ export default function SelectorPowerSearch({
     if (conflicts.length === 0) {
       onFiltersChange(newFilters);
     } else {
+      setConflictKeys(conflicts as string[]);
       setPendingFilters(newFilters);
       setConflictWarning(getConflictWarning(
         incoming.fieldKey as SelectorCategory,
@@ -49,14 +51,18 @@ export default function SelectorPowerSearch({
   };
 
   const confirmConflict = () => {
-    if (pendingFilters) onFiltersChange(pendingFilters);
+    if (pendingFilters) {
+      onFiltersChange(pendingFilters.filter(f => !conflictKeys.includes(f.fieldKey as string)));
+    }
     setPendingFilters(null);
     setConflictWarning(null);
+    setConflictKeys([]);
   };
 
   const dismissConflict = () => {
     setPendingFilters(null);
     setConflictWarning(null);
+    setConflictKeys([]);
   };
 
   return (

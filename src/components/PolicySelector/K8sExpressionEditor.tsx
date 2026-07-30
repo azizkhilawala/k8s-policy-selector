@@ -125,7 +125,7 @@ export default function K8sExpressionEditor({isDisabled, onChange, value}: Props
               options={OPERATOR_OPTIONS}
               onChange={op => updateExpression(i, {operator: op as K8sOperator})}
               isDisabled={isDisabled}
-              style={{width: 140}}
+              style={{width: '140px'}}
             />
             {!NO_VALUE_OPS.includes(expr.operator) && (
               MULTI_VALUE_OPS.includes(expr.operator) ? (

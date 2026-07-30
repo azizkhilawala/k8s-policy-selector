@@ -54,7 +54,7 @@ export default function AddRulePanel({onSave, onCancel}: Props) {
     <div style={{
       display: 'flex',
       flexDirection: 'column',
-      width: 776,
+      width: '776px',
       height: '100vh',
       backgroundColor: 'var(--color-background-surface)',
       borderLeft: '1px solid var(--color-border)',

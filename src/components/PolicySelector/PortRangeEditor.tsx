@@ -68,7 +68,7 @@ export default function PortRangeEditor({isDisabled, onChange, value}: Props) {
             options={PROTOCOL_OPTIONS}
             onChange={v => updateRange(i, {protocol: v as 'TCP' | 'UDP'})}
             isDisabled={isDisabled}
-            style={{width: 100}}
+            style={{width: '100px'}}
           />
           <NumberInput
             label="From port"
