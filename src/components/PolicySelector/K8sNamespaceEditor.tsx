@@ -99,12 +99,18 @@ function TagInput({
   isDisabled?: boolean;
 }) {
   const [input, setInput] = useState('');
+  const [open, setOpen] = useState(false);
 
   const commit = (raw: string) => {
     const val = raw.trim();
     if (val && !values.includes(val)) onChange([...values, val]);
     setInput('');
+    setOpen(false);
   };
+
+  const filtered = suggestions.filter(
+    s => !values.includes(s) && (input === '' || s.toLowerCase().includes(input.toLowerCase())),
+  );
 
   return (
     <div style={{display: 'flex', flexDirection: 'column', gap: 'var(--spacing-1)'}}>
@@ -137,39 +143,126 @@ function TagInput({
           ))}
         </div>
       )}
-      <TextInput
-        label=""
-        value={input}
-        onChange={setInput}
-        placeholder="Type a value and press Enter…"
-        isDisabled={isDisabled}
-        onKeyDown={(e: React.KeyboardEvent) => {
-          if (e.key === 'Enter') { e.preventDefault(); commit(input); }
-        }}
-      />
-      {suggestions.length > 0 && (
-        <div style={{display: 'flex', flexWrap: 'wrap', gap: 'var(--spacing-1)'}}>
-          {suggestions
-            .filter(s => !values.includes(s) && (input === '' || s.includes(input)))
-            .slice(0, 8)
-            .map(s => (
-              <button
+      <div style={{position: 'relative'}}>
+        <TextInput
+          label=""
+          value={input}
+          onChange={v => { setInput(v); setOpen(true); }}
+          placeholder="Type or select a value…"
+          isDisabled={isDisabled}
+          onFocus={() => setOpen(true)}
+          onBlur={() => setTimeout(() => setOpen(false), 150)}
+          onKeyDown={(e: React.KeyboardEvent) => {
+            if (e.key === 'Enter') { e.preventDefault(); commit(input); }
+            if (e.key === 'Escape') setOpen(false);
+          }}
+        />
+        {open && filtered.length > 0 && (
+          <ul
+            style={{
+              position: 'absolute',
+              top: '100%',
+              left: 0,
+              right: 0,
+              zIndex: 100,
+              margin: '2px 0 0',
+              padding: 0,
+              listStyle: 'none',
+              background: 'var(--color-background-primary)',
+              border: '1px solid var(--color-border-default)',
+              borderRadius: 'var(--border-radius-md)',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.12)',
+              maxHeight: '200px',
+              overflowY: 'auto',
+            }}
+          >
+            {filtered.map(s => (
+              <li
                 key={s}
-                onClick={() => onChange([...values, s])}
-                disabled={isDisabled}
+                onMouseDown={() => commit(s)}
                 style={{
-                  padding: '2px 8px',
-                  background: 'var(--color-background-tertiary)',
-                  border: '1px solid var(--color-border-default)',
-                  borderRadius: 'var(--border-radius-sm)',
-                  cursor: 'pointer', fontSize: '0.75rem',
-                  color: 'var(--color-text-secondary)',
+                  padding: '8px 12px',
+                  cursor: 'pointer',
+                  fontSize: '0.875rem',
+                  color: 'var(--color-text-primary)',
                 }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--color-background-secondary)'; }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
               >
-                + {s}
-              </button>
+                {s}
+              </li>
             ))}
-        </div>
+          </ul>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function KeyInput({
+  value,
+  suggestions,
+  onChange,
+  isDisabled,
+}: {
+  value: string;
+  suggestions: string[];
+  onChange: (v: string) => void;
+  isDisabled?: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const filtered = suggestions.filter(
+    s => value === '' || s.toLowerCase().includes(value.toLowerCase()),
+  );
+
+  return (
+    <div style={{position: 'relative'}}>
+      <TextInput
+        label="Label key"
+        value={value}
+        onChange={v => { onChange(v); setOpen(true); }}
+        placeholder="e.g. env, store, kubernetes.io/metadata.name"
+        isDisabled={isDisabled}
+        onFocus={() => setOpen(true)}
+        onBlur={() => setTimeout(() => setOpen(false), 150)}
+        onKeyDown={(e: React.KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); }}
+      />
+      {open && filtered.length > 0 && (
+        <ul
+          style={{
+            position: 'absolute',
+            top: '100%',
+            left: 0,
+            right: 0,
+            zIndex: 100,
+            margin: '2px 0 0',
+            padding: 0,
+            listStyle: 'none',
+            background: 'var(--color-background-primary)',
+            border: '1px solid var(--color-border-default)',
+            borderRadius: 'var(--border-radius-md)',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.12)',
+            maxHeight: '200px',
+            overflowY: 'auto',
+          }}
+        >
+          {filtered.map(s => (
+            <li
+              key={s}
+              onMouseDown={() => { onChange(s); setOpen(false); }}
+              style={{
+                padding: '8px 12px',
+                cursor: 'pointer',
+                fontSize: '0.875rem',
+                color: 'var(--color-text-primary)',
+              }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--color-background-secondary)'; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
+            >
+              {s}
+            </li>
+          ))}
+        </ul>
       )}
     </div>
   );
@@ -189,7 +282,6 @@ function LabelExpressionRow({
   showRemove: boolean;
 }) {
   const needsValues = expr.operator === 'In' || expr.operator === 'NotIn' || expr.operator === 'Equals';
-  const keySuggestions = COMMON_LABEL_KEYS.filter(k => !expr.key || k.includes(expr.key));
   const valueSuggestions = COMMON_LABEL_VALUES[expr.key] ?? [];
 
   return (
@@ -207,34 +299,12 @@ function LabelExpressionRow({
       <div style={{display: 'flex', gap: 'var(--spacing-2)', alignItems: 'flex-end'}}>
         {/* Key */}
         <div style={{flex: 1}}>
-          <TextInput
-            label="Label key"
+          <KeyInput
             value={expr.key}
+            suggestions={COMMON_LABEL_KEYS}
             onChange={key => onChange({...expr, key})}
-            placeholder="e.g. env, store, kubernetes.io/metadata.name"
             isDisabled={isDisabled}
           />
-          {keySuggestions.length > 0 && expr.key === '' && (
-            <div style={{display: 'flex', flexWrap: 'wrap', gap: 'var(--spacing-1)', marginTop: 'var(--spacing-1)'}}>
-              {keySuggestions.slice(0, 6).map(k => (
-                <button
-                  key={k}
-                  onClick={() => onChange({...expr, key: k})}
-                  disabled={isDisabled}
-                  style={{
-                    padding: '2px 8px',
-                    background: 'var(--color-background-tertiary)',
-                    border: '1px solid var(--color-border-default)',
-                    borderRadius: 'var(--border-radius-sm)',
-                    cursor: 'pointer', fontSize: '0.75rem',
-                    color: 'var(--color-text-secondary)',
-                  }}
-                >
-                  {k}
-                </button>
-              ))}
-            </div>
-          )}
         </div>
 
         {/* Operator */}
