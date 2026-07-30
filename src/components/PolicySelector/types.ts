@@ -1,5 +1,4 @@
 export type SelectorSide = 'source' | 'destination';
-export type K8sScope = 'namespace' | 'workload';
 export type K8sOperator = 'eq' | 'exists' | 'neq' | 'in' | 'notin' | 'notexists';
 
 export interface K8sExpression {
@@ -26,8 +25,8 @@ export interface PortRange {
 export interface K8sLabelsValue {
   category: 'k8s_labels';
   clusters: ClusterRef[];
-  scope: K8sScope;
-  expressions: K8sExpression[];
+  namespaceExpressions: K8sExpression[];
+  workloadExpressions: K8sExpression[];
 }
 
 export interface K8sServiceAccountValue {
