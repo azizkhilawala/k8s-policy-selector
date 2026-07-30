@@ -92,13 +92,16 @@ export default function AddRulePanel({onSave, onCancel}: Props) {
           isRequired
         />
 
-        <PowerSearch
-          label="Source Process / Service"
-          config={sourceProcessConfig}
-          filters={sourceProcessFilters}
-          onChange={f => setSourceProcessFilters([...f])}
-          placeholder="Select Source Process / Service..."
-        />
+        <div style={{display: 'flex', flexDirection: 'column', gap: 'var(--spacing-1)'}}>
+          <Text size="sm" weight="medium">Source Process / Service</Text>
+          <PowerSearch
+            label="Source Process / Service"
+            config={sourceProcessConfig}
+            filters={sourceProcessFilters}
+            onChange={f => setSourceProcessFilters([...f])}
+            placeholder="Select Source Process / Service..."
+          />
+        </div>
 
         <SelectorPowerSearch
           label="Destinations"
@@ -108,14 +111,20 @@ export default function AddRulePanel({onSave, onCancel}: Props) {
           isRequired
         />
 
-        <PowerSearch
-          label="Destination Services"
-          config={portRangeConfig}
-          filters={portRangeFilters}
-          onChange={f => setPortRangeFilters([...f])}
-          placeholder="Select Destination Services..."
-          isRequired
-        />
+        <div style={{display: 'flex', flexDirection: 'column', gap: 'var(--spacing-1)'}}>
+          <div style={{display: 'flex', gap: 'var(--spacing-1)', alignItems: 'center'}}>
+            <Text size="sm" color="critical">*</Text>
+            <Text size="sm" weight="medium">Destination Services</Text>
+          </div>
+          <PowerSearch
+            label="Destination Services"
+            config={portRangeConfig}
+            filters={portRangeFilters}
+            onChange={f => setPortRangeFilters([...f])}
+            placeholder="Select Destination Services..."
+            isRequired
+          />
+        </div>
 
         <RuleOptionsSelector value={ruleOptions} onChange={setRuleOptions} />
       </div>

@@ -3,6 +3,7 @@ import {PowerSearch} from '@astryxdesign/core/PowerSearch';
 import type {PowerSearchFilter} from '@astryxdesign/core/PowerSearch';
 import {Banner} from '@astryxdesign/core/Banner';
 import {Button} from '@astryxdesign/core/Button';
+import {Text} from '@astryxdesign/core/Text';
 import {buildSelectorConfig} from './selectorConfig';
 import {getConflictingCategories, getConflictWarning} from './mutualExclusion';
 import type {SelectorSide, SelectorCategory} from './types';
@@ -63,7 +64,12 @@ export default function SelectorPowerSearch({
   };
 
   return (
-    <div style={{display: 'flex', flexDirection: 'column', gap: 'var(--spacing-2)'}}>
+    <div style={{display: 'flex', flexDirection: 'column', gap: 'var(--spacing-1)'}}>
+      <div style={{display: 'flex', gap: 'var(--spacing-1)', alignItems: 'center'}}>
+        {isRequired && <Text size="sm" color="critical">*</Text>}
+        <Text size="sm" weight="medium">{label}</Text>
+      </div>
+
       {conflictWarning && (
         <Banner
           status="warning"
