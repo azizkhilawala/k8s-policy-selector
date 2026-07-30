@@ -346,6 +346,13 @@ export default function K8sNamespaceEditor({mode, isDisabled, onChange, value}: 
   const removeExpression = (i: number) =>
     emit({...state, labelExpressions: state.labelExpressions.filter((_, idx) => idx !== i)});
 
+  // Value-less modes: emit immediately on mount so Apply is enabled
+  useEffect(() => {
+    if (mode === 'wildcard' || mode === 'intra') {
+      onChange(serializeNamespace({mode, names: [], labelExpressions: []}));
+    }
+  }, [mode]); // eslint-disable-line react-hooks/exhaustive-deps
+
   if (mode === 'wildcard') {
     return (
       <div style={{padding: 'var(--spacing-2)'}}>
