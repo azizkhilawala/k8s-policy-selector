@@ -1,4 +1,5 @@
 import type {PowerSearchConfig} from '@astryxdesign/core/PowerSearch';
+import {createStaticSource} from '@astryxdesign/core/Typeahead';
 import CloudResourceEditor, {cloudResourceGetString} from './CloudResourceEditor';
 import PortRangeEditor, {portRangeGetString} from './PortRangeEditor';
 import type {SelectorSide} from './types';
@@ -12,11 +13,12 @@ function makeCloudEditor(category: Parameters<typeof cloudResourceGetString>[1])
   };
 }
 
-function makeSuggestionStringList(suggestions: string[]) {
+function makeStringList(values: string[]) {
+  const items = values.map(v => ({id: v, label: v}));
   return {
     type: 'string_list' as const,
     isArbitraryStringAllowed: true,
-    suggestions: suggestions.map(s => ({id: s, label: s})),
+    searchSource: createStaticSource(items),
   };
 }
 
@@ -121,7 +123,7 @@ export function buildSelectorConfig(side: SelectorSide): PowerSearchConfig {
       operators: [{
         key: 'is_any',
         label: 'includes',
-        value: makeSuggestionStringList(K8S_LABEL_SUGGESTIONS),
+        value: makeStringList(K8S_LABEL_SUGGESTIONS),
       }],
     },
     {
@@ -132,12 +134,12 @@ export function buildSelectorConfig(side: SelectorSide): PowerSearchConfig {
         {
           key: 'is_any',
           label: 'is any of',
-          value: makeSuggestionStringList(K8S_NAMESPACE_SUGGESTIONS),
+          value: makeStringList(K8S_NAMESPACE_SUGGESTIONS),
         },
         {
           key: 'is_not',
           label: 'is not',
-          value: makeSuggestionStringList(K8S_NAMESPACE_SUGGESTIONS),
+          value: makeStringList(K8S_NAMESPACE_SUGGESTIONS),
         },
         {
           key: 'starts_with',
@@ -154,12 +156,12 @@ export function buildSelectorConfig(side: SelectorSide): PowerSearchConfig {
         {
           key: 'is_any',
           label: 'is any of',
-          value: makeSuggestionStringList(K8S_CLUSTER_SUGGESTIONS),
+          value: makeStringList(K8S_CLUSTER_SUGGESTIONS),
         },
         {
           key: 'is_not',
           label: 'is not',
-          value: makeSuggestionStringList(K8S_CLUSTER_SUGGESTIONS),
+          value: makeStringList(K8S_CLUSTER_SUGGESTIONS),
         },
       ],
     },
@@ -171,12 +173,12 @@ export function buildSelectorConfig(side: SelectorSide): PowerSearchConfig {
         {
           key: 'is_any',
           label: 'is any of',
-          value: makeSuggestionStringList(K8S_SERVICE_ACCOUNT_SUGGESTIONS),
+          value: makeStringList(K8S_SERVICE_ACCOUNT_SUGGESTIONS),
         },
         {
           key: 'is_not',
           label: 'is not',
-          value: makeSuggestionStringList(K8S_SERVICE_ACCOUNT_SUGGESTIONS),
+          value: makeStringList(K8S_SERVICE_ACCOUNT_SUGGESTIONS),
         },
       ],
     },
@@ -188,12 +190,12 @@ export function buildSelectorConfig(side: SelectorSide): PowerSearchConfig {
         {
           key: 'is_any',
           label: 'is any of',
-          value: makeSuggestionStringList(IP_LIST_SUGGESTIONS),
+          value: makeStringList(IP_LIST_SUGGESTIONS),
         },
         {
           key: 'is_not',
           label: 'excludes',
-          value: makeSuggestionStringList(IP_LIST_SUGGESTIONS),
+          value: makeStringList(IP_LIST_SUGGESTIONS),
         },
       ],
     },
@@ -205,12 +207,12 @@ export function buildSelectorConfig(side: SelectorSide): PowerSearchConfig {
         {
           key: 'is_any',
           label: 'is any of',
-          value: makeSuggestionStringList(AWS_ACCOUNT_SUGGESTIONS),
+          value: makeStringList(AWS_ACCOUNT_SUGGESTIONS),
         },
         {
           key: 'is_not',
           label: 'is not',
-          value: makeSuggestionStringList(AWS_ACCOUNT_SUGGESTIONS),
+          value: makeStringList(AWS_ACCOUNT_SUGGESTIONS),
         },
       ],
     },
@@ -234,12 +236,12 @@ export function buildSelectorConfig(side: SelectorSide): PowerSearchConfig {
         {
           key: 'is_any',
           label: 'is any of',
-          value: makeSuggestionStringList(AZURE_SUBSCRIPTION_SUGGESTIONS),
+          value: makeStringList(AZURE_SUBSCRIPTION_SUGGESTIONS),
         },
         {
           key: 'is_not',
           label: 'is not',
-          value: makeSuggestionStringList(AZURE_SUBSCRIPTION_SUGGESTIONS),
+          value: makeStringList(AZURE_SUBSCRIPTION_SUGGESTIONS),
         },
       ],
     },
@@ -262,7 +264,7 @@ export function buildSelectorConfig(side: SelectorSide): PowerSearchConfig {
       operators: [{
         key: 'is_any',
         label: 'includes',
-        value: makeSuggestionStringList(ILLUMIO_LABEL_SUGGESTIONS),
+        value: makeStringList(ILLUMIO_LABEL_SUGGESTIONS),
       }],
     },
   ];
@@ -277,12 +279,12 @@ export function buildSelectorConfig(side: SelectorSide): PowerSearchConfig {
           {
             key: 'is_any',
             label: 'matches any of',
-            value: makeSuggestionStringList(FQDN_SUGGESTIONS),
+            value: makeStringList(FQDN_SUGGESTIONS),
           },
           {
             key: 'is_not',
             label: 'does not match',
-            value: makeSuggestionStringList(FQDN_SUGGESTIONS),
+            value: makeStringList(FQDN_SUGGESTIONS),
           },
         ],
       },
@@ -294,12 +296,12 @@ export function buildSelectorConfig(side: SelectorSide): PowerSearchConfig {
           {
             key: 'is_any',
             label: 'is any of',
-            value: makeSuggestionStringList(K8S_SERVICE_SUGGESTIONS),
+            value: makeStringList(K8S_SERVICE_SUGGESTIONS),
           },
           {
             key: 'is_not',
             label: 'is not',
-            value: makeSuggestionStringList(K8S_SERVICE_SUGGESTIONS),
+            value: makeStringList(K8S_SERVICE_SUGGESTIONS),
           },
         ],
       },
@@ -311,12 +313,12 @@ export function buildSelectorConfig(side: SelectorSide): PowerSearchConfig {
           {
             key: 'is_any',
             label: 'is any of',
-            value: makeSuggestionStringList(K8S_INGRESS_SUGGESTIONS),
+            value: makeStringList(K8S_INGRESS_SUGGESTIONS),
           },
           {
             key: 'is_not',
             label: 'is not',
-            value: makeSuggestionStringList(K8S_INGRESS_SUGGESTIONS),
+            value: makeStringList(K8S_INGRESS_SUGGESTIONS),
           },
         ],
       },
@@ -328,12 +330,12 @@ export function buildSelectorConfig(side: SelectorSide): PowerSearchConfig {
           {
             key: 'is_any',
             label: 'is any of',
-            value: makeSuggestionStringList(K8S_GATEWAY_SUGGESTIONS),
+            value: makeStringList(K8S_GATEWAY_SUGGESTIONS),
           },
           {
             key: 'is_not',
             label: 'is not',
-            value: makeSuggestionStringList(K8S_GATEWAY_SUGGESTIONS),
+            value: makeStringList(K8S_GATEWAY_SUGGESTIONS),
           },
         ],
       },
