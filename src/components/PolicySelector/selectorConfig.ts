@@ -1,6 +1,7 @@
 import type {PowerSearchConfig} from '@astryxdesign/core/PowerSearch';
 import {createStaticSource} from '@astryxdesign/core/Typeahead';
 import CloudResourceEditor, {cloudResourceGetString} from './CloudResourceEditor';
+import K8sNamespaceEditor, {namespaceGetString} from './K8sNamespaceEditor';
 import PortRangeEditor, {portRangeGetString} from './PortRangeEditor';
 import type {SelectorSide} from './types';
 
@@ -32,14 +33,6 @@ const K8S_LABEL_SUGGESTIONS = [
   'component=controller', 'component=proxy', 'component=agent',
   'release=stable', 'release=beta',
   'region=us-east-1', 'region=us-west-2', 'region=eu-west-1',
-];
-
-// ── K8s Namespace ─────────────────────────────────────────────────────────────
-const K8S_NAMESPACE_SUGGESTIONS = [
-  'default', 'kube-system', 'kube-public', 'kube-node-lease',
-  'production', 'staging', 'development', 'qa', 'sandbox',
-  'monitoring', 'logging', 'ingress-nginx', 'cert-manager',
-  'istio-system', 'argocd', 'flux-system',
 ];
 
 // ── K8s Cluster ───────────────────────────────────────────────────────────────
@@ -129,24 +122,17 @@ export function buildSelectorConfig(side: SelectorSide): PowerSearchConfig {
     {
       key: 'k8s_namespace',
       label: 'K8s Namespace',
-      defaultOperator: 'is_any',
-      operators: [
-        {
-          key: 'is_any',
-          label: 'is any of',
-          value: makeStringList(K8S_NAMESPACE_SUGGESTIONS),
+      defaultOperator: 'select',
+      operators: [{
+        key: 'select',
+        label: 'matches',
+        value: {
+          type: 'custom' as const,
+          Editor: (props: {isDisabled?: boolean; onChange: (v: string | null) => void; placeholder: string; value: string | null}) =>
+            K8sNamespaceEditor(props),
+          getString: (v: string) => namespaceGetString(v),
         },
-        {
-          key: 'is_not',
-          label: 'is not',
-          value: makeStringList(K8S_NAMESPACE_SUGGESTIONS),
-        },
-        {
-          key: 'starts_with',
-          label: 'starts with',
-          value: {type: 'string' as const},
-        },
-      ],
+      }],
     },
     {
       key: 'k8s_cluster',

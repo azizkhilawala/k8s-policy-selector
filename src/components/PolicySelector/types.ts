@@ -22,9 +22,27 @@ export interface K8sLabelsValue {
   labels: string[];
 }
 
+export type K8sNamespaceLabelOperator = 'In' | 'NotIn' | 'Exists' | 'DoesNotExist' | 'Equals';
+
+export interface K8sNamespaceLabelExpression {
+  key: string;
+  operator: K8sNamespaceLabelOperator;
+  values: string[]; // empty for Exists / DoesNotExist
+}
+
+// mode='name'   — select by namespace name (original behaviour)
+// mode='label'  — select by namespace label expressions (NP expression spec)
+// mode='wildcard' — any namespace (namespaceSelector: {})
+// mode='intra'  — same namespace as the policy (implicit podSelector only)
+export type K8sNamespaceMode = 'name' | 'label' | 'wildcard' | 'intra';
+
 export interface K8sNamespaceValue {
   category: 'k8s_namespace';
+  mode: K8sNamespaceMode;
+  // mode='name'
   names: string[];
+  // mode='label'
+  labelExpressions: K8sNamespaceLabelExpression[];
 }
 
 export interface K8sClusterValue {

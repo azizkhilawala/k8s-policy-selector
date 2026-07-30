@@ -1,4 +1,4 @@
-import type {SelectorValue, ClusterRef, PortRange} from '../../src/components/PolicySelector/types';
+import type {SelectorValue, ClusterRef, PortRange, K8sNamespaceValue} from '../../src/components/PolicySelector/types';
 
 describe('types', () => {
   it('ClusterRef discriminated union narrows correctly', () => {
@@ -21,5 +21,26 @@ describe('types', () => {
   it('SelectorValue category discriminates illumio_labels', () => {
     const val: SelectorValue = {category: 'illumio_labels', labels: ['Role:web', 'Env:Production']};
     expect(val.category).toBe('illumio_labels');
+  });
+
+  it('K8sNamespaceValue supports label mode with expressions', () => {
+    const val: K8sNamespaceValue = {
+      category: 'k8s_namespace',
+      mode: 'label',
+      names: [],
+      labelExpressions: [{key: 'store', operator: 'In', values: ['retail', 'online']}],
+    };
+    expect(val.mode).toBe('label');
+    expect(val.labelExpressions[0].operator).toBe('In');
+  });
+
+  it('K8sNamespaceValue supports wildcard mode', () => {
+    const val: K8sNamespaceValue = {
+      category: 'k8s_namespace',
+      mode: 'wildcard',
+      names: [],
+      labelExpressions: [],
+    };
+    expect(val.mode).toBe('wildcard');
   });
 });
