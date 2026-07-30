@@ -2,6 +2,7 @@ export {default as AddRulePanel} from './AddRulePanel';
 export {default as SelectorPowerSearch} from './SelectorPowerSearch';
 export {default as RuleOptionsSelector} from './RuleOptionsSelector';
 export {default as K8sExpressionEditor} from './K8sExpressionEditor';
+export {default as IllumioLabelEditor} from './IllumioLabelEditor';
 export {default as CloudResourceEditor} from './CloudResourceEditor';
 export {default as PortRangeEditor} from './PortRangeEditor';
 export {default as ClusterSelector} from './ClusterSelector';

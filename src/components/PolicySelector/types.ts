@@ -1,4 +1,5 @@
 export type SelectorSide = 'source' | 'destination';
+export type K8sScope = 'namespace' | 'workload';
 export type K8sOperator = 'eq' | 'exists' | 'neq' | 'in' | 'notin' | 'notexists';
 
 export interface K8sExpression {
@@ -25,8 +26,17 @@ export interface PortRange {
 export interface K8sLabelsValue {
   category: 'k8s_labels';
   clusters: ClusterRef[];
-  namespaceExpressions: K8sExpression[];
-  workloadExpressions: K8sExpression[];
+  expressions: K8sExpression[];
+}
+
+export interface K8sNamespaceValue {
+  category: 'k8s_namespace';
+  names: string[];
+}
+
+export interface K8sClusterValue {
+  category: 'k8s_cluster';
+  clusterNames: string[];
 }
 
 export interface K8sServiceAccountValue {
@@ -93,12 +103,22 @@ export interface CloudAzureSubnetValue {
   resourceIds: string[]; // full Azure resource ID
 }
 
+export type IllumioDimension = 'role' | 'app' | 'env' | 'loc';
+
+export interface IllumioLabelEntry {
+  dimension: IllumioDimension;
+  value: string;
+}
+
 export interface IllumioLabelsValue {
-  category: 'illumio_labels'; // placeholder, not yet implemented
+  category: 'illumio_labels';
+  labels: IllumioLabelEntry[];
 }
 
 export type SelectorValue =
   | K8sLabelsValue
+  | K8sNamespaceValue
+  | K8sClusterValue
   | K8sServiceAccountValue
   | FqdnValue
   | K8sServiceValue

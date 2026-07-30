@@ -10,8 +10,8 @@ export const DESTINATION_ONLY_CATEGORIES: SelectorCategory[] = [
 // Categories that cannot coexist with each other on the destination side.
 // K8s targeting modes: labels vs service/ingress/gateway are mutually exclusive.
 const K8S_TARGETING_MODES: SelectorCategory[][] = [
-  ['k8s_labels', 'k8s_service_account'],          // workload label mode
-  ['k8s_service', 'k8s_ingress', 'k8s_gateway'],  // service/ingress/gateway mode
+  ['k8s_labels', 'k8s_namespace', 'k8s_cluster', 'k8s_service_account'], // workload/label mode
+  ['k8s_service', 'k8s_ingress', 'k8s_gateway'],                          // service/ingress/gateway mode
 ];
 
 // Cloud provider groups: AWS vs Azure mutually exclusive.
@@ -82,6 +82,8 @@ export function getConflictingCategories(
 
 const CATEGORY_LABELS: Record<SelectorCategory, string> = {
   k8s_labels: 'K8s Labels',
+  k8s_namespace: 'K8s Namespace',
+  k8s_cluster: 'K8s Cluster',
   k8s_service_account: 'Service Account',
   fqdn: 'FQDN',
   k8s_service: 'K8s Service',
