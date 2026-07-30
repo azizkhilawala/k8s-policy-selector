@@ -1,0 +1,1512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>K8s Policy Rule Selector — Astryx Prototype</title>
+  <style>
+    /* ── Design Tokens (Astryx-aligned) ─────────────────────────────────── */
+    :root {
+      --color-bg:            #0d0f1a;
+      --color-surface:       #141627;
+      --color-surface-raised:#1c1f35;
+      --color-surface-high:  #22264a;
+      --color-border:        #2a2d4a;
+      --color-border-focus:  #6366f1;
+      --color-text:          #e2e4f0;
+      --color-text-secondary:#8b8fa8;
+      --color-text-placeholder:#5a5d78;
+      --color-accent:        #6366f1;
+      --color-accent-subtle: #1e2048;
+      --color-accent-text:   #a5b4fc;
+      --color-success:       #22c55e;
+      --color-success-subtle:#0d2b1a;
+      --color-warning:       #f59e0b;
+      --color-warning-subtle:#2a1f08;
+      --color-error:         #ef4444;
+      --color-error-subtle:  #2a0e0e;
+      --color-chip-bg:       #1c1f35;
+      --color-chip-active:   #2d3168;
+      --color-chip-border:   #2a2d4a;
+      --color-chip-active-border: #6366f1;
+
+      --spacing-xs: 4px;
+      --spacing-sm: 8px;
+      --spacing-md: 12px;
+      --spacing-lg: 16px;
+      --spacing-xl: 20px;
+      --spacing-2xl:24px;
+      --spacing-3xl:32px;
+
+      --radius-sm: 4px;
+      --radius-md: 6px;
+      --radius-lg: 8px;
+      --radius-full: 999px;
+
+      --font-sans: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+      --font-mono: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+
+      --shadow-popover: 0 8px 24px rgba(0,0,0,.45), 0 2px 8px rgba(0,0,0,.3);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font-sans);
+      background: var(--color-bg);
+      color: var(--color-text);
+      font-size: 13px;
+      line-height: 1.5;
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: var(--spacing-3xl);
+      gap: var(--spacing-3xl);
+    }
+
+    /* ── Page chrome ─────────────────────────────────────────────────────── */
+    .page-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .8px;
+      color: var(--color-text-secondary);
+      margin-bottom: var(--spacing-lg);
+    }
+
+    /* ── Panel shell (simulates the Add Rule slide-out) ──────────────────── */
+    .panel {
+      width: 680px;
+      flex-shrink: 0;
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+
+    .panel-header {
+      padding: var(--spacing-lg) var(--spacing-2xl);
+      border-bottom: 1px solid var(--color-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .panel-header-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--color-text);
+    }
+
+    .panel-header-subtitle {
+      font-size: 11px;
+      color: var(--color-text-secondary);
+      margin-top: 2px;
+    }
+
+    .panel-body {
+      padding: var(--spacing-2xl);
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-xl);
+    }
+
+    /* ── Section card ────────────────────────────────────────────────────── */
+    .section-card {
+      background: var(--color-surface-raised);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+
+    .section-card.focused {
+      border-color: var(--color-border-focus);
+    }
+
+    .section-header {
+      padding: var(--spacing-md) var(--spacing-lg);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .section-header:hover { background: rgba(255,255,255,.02); }
+
+    .section-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--color-text);
+    }
+
+    .section-subtitle {
+      font-size: 11px;
+      color: var(--color-text-secondary);
+      margin-top: 2px;
+    }
+
+    .section-badge {
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: var(--radius-full);
+    }
+
+    .section-badge.complete {
+      background: var(--color-success-subtle);
+      color: var(--color-success);
+    }
+
+    .section-badge.draft {
+      background: var(--color-surface-high);
+      color: var(--color-text-secondary);
+    }
+
+    .section-badge.active {
+      background: var(--color-accent-subtle);
+      color: var(--color-accent-text);
+    }
+
+    .section-body {
+      padding: var(--spacing-lg) var(--spacing-lg) var(--spacing-xl);
+      border-top: 1px solid var(--color-border);
+    }
+
+    /* ── Direction picker ────────────────────────────────────────────────── */
+    .direction-group {
+      display: flex;
+      gap: var(--spacing-sm);
+      margin-bottom: var(--spacing-lg);
+    }
+
+    .direction-btn {
+      flex: 1;
+      padding: var(--spacing-sm) var(--spacing-md);
+      background: var(--color-surface-high);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      color: var(--color-text-secondary);
+      font-size: 12px;
+      font-family: var(--font-sans);
+      cursor: pointer;
+      text-align: center;
+      transition: all 120ms;
+    }
+
+    .direction-btn:hover { border-color: var(--color-accent); color: var(--color-text); }
+
+    .direction-btn.active {
+      background: var(--color-chip-active);
+      border-color: var(--color-accent);
+      color: var(--color-accent-text);
+      font-weight: 600;
+    }
+
+    .direction-hint {
+      font-size: 11px;
+      color: var(--color-text-secondary);
+      margin-top: var(--spacing-xs);
+    }
+
+    /* ── Source / Destination grid ───────────────────────────────────────── */
+    .rule-grid {
+      display: grid;
+      grid-template-columns: 1fr 28px 1fr;
+      gap: var(--spacing-lg);
+      align-items: start;
+    }
+
+    .rule-arrow {
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding-top: 36px;
+      color: var(--color-accent);
+      font-size: 18px;
+    }
+
+    .rule-col-label {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .6px;
+      color: var(--color-text-secondary);
+      margin-bottom: var(--spacing-sm);
+    }
+
+    /* ── Selector type chips ─────────────────────────────────────────────── */
+    .chip-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--spacing-xs);
+      margin-bottom: var(--spacing-sm);
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 10px;
+      background: var(--color-chip-bg);
+      border: 1px solid var(--color-chip-border);
+      border-radius: var(--radius-full);
+      color: var(--color-text-secondary);
+      font-size: 11px;
+      cursor: pointer;
+      transition: all 100ms;
+      white-space: nowrap;
+    }
+
+    .chip:hover { border-color: var(--color-accent); color: var(--color-text); }
+
+    .chip.active {
+      background: var(--color-chip-active);
+      border-color: var(--color-chip-active-border);
+      color: var(--color-accent-text);
+    }
+
+    .chip .chip-icon { font-size: 10px; }
+
+    /* ── Selector editor ─────────────────────────────────────────────────── */
+    .selector-editor {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      padding: var(--spacing-sm) var(--spacing-md);
+      min-height: 56px;
+    }
+
+    .selector-editor.is-focused { border-color: var(--color-accent); }
+
+    .selector-empty {
+      font-size: 12px;
+      color: var(--color-text-placeholder);
+      line-height: 2.5;
+    }
+
+    .selector-summary {
+      font-size: 12px;
+      color: var(--color-text);
+    }
+
+    /* ── Token chips (selected values) ──────────────────────────────────── */
+    .token-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--spacing-xs);
+      align-items: center;
+      min-height: 32px;
+    }
+
+    .token {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 6px 3px 10px;
+      background: var(--color-accent-subtle);
+      border: 1px solid var(--color-accent);
+      border-radius: var(--radius-full);
+      color: var(--color-accent-text);
+      font-size: 11px;
+      font-family: var(--font-mono);
+    }
+
+    .token-remove {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: rgba(99,102,241,.2);
+      color: var(--color-accent-text);
+      cursor: pointer;
+      font-size: 10px;
+      border: none;
+      transition: background 100ms;
+    }
+
+    .token-remove:hover { background: rgba(99,102,241,.5); }
+
+    /* ── Label expression builder ────────────────────────────────────────── */
+    .label-builder {
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-sm);
+    }
+
+    .label-row {
+      display: flex;
+      gap: var(--spacing-xs);
+      align-items: center;
+    }
+
+    .label-input {
+      flex: 1;
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-sm);
+      padding: 5px var(--spacing-sm);
+      color: var(--color-text);
+      font-size: 12px;
+      font-family: var(--font-mono);
+      outline: none;
+      transition: border-color 100ms;
+    }
+
+    .label-input::placeholder { color: var(--color-text-placeholder); }
+    .label-input:focus { border-color: var(--color-accent); }
+
+    .label-op-select {
+      width: 50px;
+      background: var(--color-surface-high);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-sm);
+      padding: 5px 6px;
+      color: var(--color-text);
+      font-size: 11px;
+      font-family: var(--font-mono);
+      outline: none;
+      cursor: pointer;
+    }
+
+    .label-op-select:focus { border-color: var(--color-accent); }
+
+    .label-add-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px var(--spacing-sm);
+      background: transparent;
+      border: 1px dashed var(--color-border);
+      border-radius: var(--radius-sm);
+      color: var(--color-text-secondary);
+      font-size: 11px;
+      cursor: pointer;
+      transition: all 100ms;
+      align-self: flex-start;
+    }
+
+    .label-add-btn:hover {
+      border-color: var(--color-accent);
+      color: var(--color-accent-text);
+      background: var(--color-accent-subtle);
+    }
+
+    .label-remove-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px;
+      height: 22px;
+      background: transparent;
+      border: none;
+      border-radius: var(--radius-sm);
+      color: var(--color-text-secondary);
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 100ms;
+      flex-shrink: 0;
+    }
+
+    .label-remove-btn:hover { background: var(--color-error-subtle); color: var(--color-error); }
+
+    /* ── Port/Protocol section ───────────────────────────────────────────── */
+    .port-grid {
+      display: grid;
+      grid-template-columns: 100px 1fr;
+      gap: var(--spacing-sm);
+      align-items: end;
+    }
+
+    .port-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--spacing-xs);
+      margin-bottom: var(--spacing-sm);
+    }
+
+    /* ── Form controls ───────────────────────────────────────────────────── */
+    .field-label {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .6px;
+      color: var(--color-text-secondary);
+      margin-bottom: var(--spacing-xs);
+      display: block;
+    }
+
+    .input {
+      width: 100%;
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      padding: 7px var(--spacing-md);
+      color: var(--color-text);
+      font-size: 13px;
+      font-family: var(--font-sans);
+      outline: none;
+      transition: border-color 120ms;
+    }
+
+    .input::placeholder { color: var(--color-text-placeholder); }
+    .input:focus { border-color: var(--color-accent); }
+
+    .select {
+      width: 100%;
+      background: var(--color-surface-high);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      padding: 7px var(--spacing-md);
+      color: var(--color-text);
+      font-size: 13px;
+      font-family: var(--font-sans);
+      outline: none;
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%235a5d78' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+      padding-right: 28px;
+    }
+
+    .select:focus { border-color: var(--color-accent); }
+
+    /* ── Action footer ───────────────────────────────────────────────────── */
+    .panel-footer {
+      padding: var(--spacing-lg) var(--spacing-2xl);
+      border-top: 1px solid var(--color-border);
+      display: flex;
+      justify-content: flex-end;
+      gap: var(--spacing-sm);
+    }
+
+    .btn {
+      padding: 7px var(--spacing-lg);
+      border-radius: var(--radius-md);
+      font-size: 13px;
+      font-family: var(--font-sans);
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      transition: all 120ms;
+    }
+
+    .btn-ghost {
+      background: transparent;
+      border: 1px solid var(--color-border);
+      color: var(--color-text-secondary);
+    }
+
+    .btn-ghost:hover { border-color: var(--color-text-secondary); color: var(--color-text); }
+
+    .btn-primary {
+      background: var(--color-accent);
+      color: #fff;
+    }
+
+    .btn-primary:hover { background: #5254d0; }
+
+    .btn-primary:disabled {
+      opacity: .4;
+      cursor: not-allowed;
+    }
+
+    /* ── Preview panel (right side) ──────────────────────────────────────── */
+    .preview-panel {
+      width: 300px;
+      flex-shrink: 0;
+    }
+
+    .preview-card {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      margin-bottom: var(--spacing-lg);
+    }
+
+    .preview-card-header {
+      padding: var(--spacing-md) var(--spacing-lg);
+      border-bottom: 1px solid var(--color-border);
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .6px;
+      color: var(--color-text-secondary);
+    }
+
+    .preview-card-body { padding: var(--spacing-md) var(--spacing-lg); }
+
+    .yaml-block {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--color-text);
+      line-height: 1.7;
+      white-space: pre;
+      overflow-x: auto;
+    }
+
+    .yaml-key { color: #a5b4fc; }
+    .yaml-value { color: #86efac; }
+    .yaml-comment { color: var(--color-text-secondary); }
+    .yaml-ns { color: #fbbf24; }
+    .yaml-port { color: #f472b6; }
+
+    /* ── Operator explanation ─────────────────────────────────────────────  */
+    .expr-hint {
+      font-size: 11px;
+      color: var(--color-text-secondary);
+      font-style: italic;
+      margin-top: var(--spacing-xs);
+    }
+
+    /* ── Section divider label ───────────────────────────────────────────── */
+    .field-group { display: flex; flex-direction: column; gap: var(--spacing-xs); }
+
+    .spacer-sm { height: var(--spacing-sm); }
+    .spacer-md { height: var(--spacing-md); }
+
+    /* ── Scrollable tokenizer ─────────────────────────────────────────────  */
+    .tokenizer-field {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      padding: var(--spacing-xs) var(--spacing-sm);
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--spacing-xs);
+      align-items: center;
+      min-height: 38px;
+      cursor: text;
+      transition: border-color 120ms;
+    }
+
+    .tokenizer-field:focus-within { border-color: var(--color-accent); }
+
+    .tokenizer-input {
+      flex: 1;
+      min-width: 80px;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--color-text);
+      font-size: 12px;
+      font-family: var(--font-mono);
+      padding: 2px 4px;
+    }
+
+    .tokenizer-input::placeholder { color: var(--color-text-placeholder); }
+
+    /* ── CIDR / IP editor ─────────────────────────────────────────────────  */
+    .ip-row {
+      display: flex;
+      gap: var(--spacing-xs);
+      align-items: center;
+      margin-bottom: var(--spacing-xs);
+    }
+
+    /* ── NS label (read-only context) ────────────────────────────────────── */
+    .ns-context {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 10px;
+      background: var(--color-surface-high);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-full);
+      font-size: 11px;
+      color: var(--color-text-secondary);
+      margin-bottom: var(--spacing-sm);
+    }
+
+    .ns-context .ns-dot {
+      width: 6px; height: 6px;
+      background: var(--color-accent);
+      border-radius: 50%;
+    }
+
+    /* ── Collapsible scope summary ────────────────────────────────────────  */
+    .scope-summary {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-xl);
+    }
+
+    .scope-ns-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 10px;
+      background: var(--color-accent-subtle);
+      border: 1px solid var(--color-accent);
+      border-radius: var(--radius-full);
+      color: var(--color-accent-text);
+      font-size: 12px;
+    }
+
+    .scope-arrow {
+      color: var(--color-text-secondary);
+      font-size: 16px;
+    }
+
+    /* ── Hidden panels ────────────────────────────────────────────────────  */
+    .editor-panel { display: none; }
+    .editor-panel.visible { display: block; }
+
+    /* ── Popover dropdown ─────────────────────────────────────────────────  */
+    .dropdown-popover {
+      position: absolute;
+      background: var(--color-surface-raised);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-popover);
+      min-width: 200px;
+      z-index: 100;
+      overflow: hidden;
+    }
+
+    .dropdown-item {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+      padding: var(--spacing-sm) var(--spacing-md);
+      font-size: 12px;
+      color: var(--color-text);
+      cursor: pointer;
+      transition: background 80ms;
+    }
+
+    .dropdown-item:hover { background: var(--color-surface-high); }
+
+    .dropdown-item.selected { color: var(--color-accent-text); }
+    .dropdown-item.selected::after { content: '✓'; margin-left: auto; color: var(--color-accent); }
+
+    /* ── Match logic toggle ───────────────────────────────────────────────  */
+    .match-toggle {
+      display: inline-flex;
+      background: var(--color-surface-high);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      margin-bottom: var(--spacing-sm);
+    }
+
+    .match-toggle-btn {
+      padding: 3px var(--spacing-sm);
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      background: transparent;
+      border: none;
+      color: var(--color-text-secondary);
+      cursor: pointer;
+      transition: all 100ms;
+    }
+
+    .match-toggle-btn.active {
+      background: var(--color-chip-active);
+      color: var(--color-accent-text);
+    }
+
+    /* banner */
+    .info-banner {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+      padding: var(--spacing-sm) var(--spacing-md);
+      background: var(--color-accent-subtle);
+      border: 1px solid rgba(99,102,241,.3);
+      border-radius: var(--radius-md);
+      font-size: 11px;
+      color: var(--color-accent-text);
+    }
+
+    .info-banner .icon { font-size: 13px; flex-shrink: 0; }
+  </style>
+</head>
+<body>
+
+<!-- ── Left: Main panel ─────────────────────────────────────────────────── -->
+<div>
+  <div class="page-label">Illumio · Add Rule — K8s Policy Selector</div>
+
+  <div class="panel">
+    <div class="panel-header">
+      <div>
+        <div class="panel-header-title">Add Rule</div>
+        <div class="panel-header-subtitle">Container Segmentation · prod-eks-us-east-1 · NS→NS Same Cluster</div>
+      </div>
+      <button class="btn btn-ghost" style="padding:4px 8px; font-size:16px;">✕</button>
+    </div>
+
+    <div class="panel-body">
+
+      <!-- Scope (collapsed, complete) -->
+      <div class="section-card">
+        <div class="section-header" onclick="toggleSection('scope')">
+          <div>
+            <div class="section-title">Scope</div>
+            <div class="section-subtitle" id="scope-summary-line">frontend → backend</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span class="section-badge complete">Complete</span>
+            <span id="scope-chevron" style="color:var(--color-text-secondary);font-size:10px;">▼</span>
+          </div>
+        </div>
+        <div class="section-body" id="scope-body" style="display:none;">
+          <div class="scope-summary">
+            <div>
+              <div class="field-label">Source NS</div>
+              <span class="scope-ns-tag"><span style="font-size:11px">📦</span> frontend</span>
+            </div>
+            <span class="scope-arrow">→</span>
+            <div>
+              <div class="field-label">Destination NS</div>
+              <span class="scope-ns-tag"><span style="font-size:11px">📦</span> backend</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Rule (active) -->
+      <div class="section-card focused" id="rule-section">
+        <div class="section-header">
+          <div>
+            <div class="section-title">Rule</div>
+            <div class="section-subtitle">Define source pods, destination pods, and ports</div>
+          </div>
+          <span class="section-badge active" id="rule-badge">Defining</span>
+        </div>
+        <div class="section-body">
+
+          <!-- Direction -->
+          <div class="field-group" style="margin-bottom:var(--spacing-lg)">
+            <label class="field-label">Direction</label>
+            <div class="direction-group">
+              <button class="direction-btn" onclick="setDirection('ingress', this)">↓ Ingress</button>
+              <button class="direction-btn" onclick="setDirection('egress', this)">↑ Egress</button>
+              <button class="direction-btn active" onclick="setDirection('both', this)">↕ Both</button>
+            </div>
+            <div class="direction-hint" id="direction-hint">Generates paired ingress + egress rules for bidirectional communication</div>
+          </div>
+
+          <!-- Source → Destination grid -->
+          <div class="rule-grid">
+
+            <!-- Source col -->
+            <div>
+              <div class="rule-col-label">Source Pods</div>
+              <div class="ns-context"><span class="ns-dot"></span>frontend namespace</div>
+
+              <!-- Selector type chips -->
+              <div class="chip-row" id="src-chips">
+                <span class="chip active" data-type="all" onclick="setSrcType('all',this)">
+                  <span class="chip-icon">*</span> All Pods
+                </span>
+                <span class="chip" data-type="pod-labels" onclick="setSrcType('pod-labels',this)">
+                  <span class="chip-icon">🏷</span> Pod Labels
+                </span>
+                <span class="chip" data-type="pod-expr" onclick="setSrcType('pod-expr',this)">
+                  <span class="chip-icon">∈</span> Label Expr
+                </span>
+                <span class="chip" data-type="deployment" onclick="setSrcType('deployment',this)">
+                  <span class="chip-icon">🚀</span> Deployment
+                </span>
+                <span class="chip" data-type="service-account" onclick="setSrcType('service-account',this)">
+                  <span class="chip-icon">🔑</span> ServiceAccount
+                </span>
+              </div>
+
+              <!-- Editor -->
+              <div id="src-editor">
+                <!-- all pods -->
+                <div class="editor-panel visible" id="src-editor-all">
+                  <div class="selector-editor">
+                    <div class="selector-summary" style="color:var(--color-text-secondary)">
+                      All pods in <strong style="color:var(--color-accent-text)">frontend</strong>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- pod labels -->
+                <div class="editor-panel" id="src-editor-pod-labels">
+                  <div class="label-builder" id="src-label-builder">
+                    <div class="label-row">
+                      <input class="label-input" placeholder="key" style="max-width:80px" />
+                      <select class="label-op-select" onchange="updateYaml()">
+                        <option>=</option>
+                        <option>!=</option>
+                        <option>In</option>
+                        <option>NotIn</option>
+                      </select>
+                      <input class="label-input" placeholder="value" oninput="updateYaml()" />
+                      <button class="label-remove-btn" onclick="removeLabelRow(this)">×</button>
+                    </div>
+                  </div>
+                  <div class="spacer-xs"></div>
+                  <button class="label-add-btn" onclick="addLabelRow('src-label-builder')">+ Add label</button>
+                </div>
+
+                <!-- label expression -->
+                <div class="editor-panel" id="src-editor-pod-expr">
+                  <div class="match-toggle">
+                    <button class="match-toggle-btn active" onclick="setMatchLogic('src','all',this)">AND</button>
+                    <button class="match-toggle-btn" onclick="setMatchLogic('src','any',this)">OR</button>
+                  </div>
+                  <div class="label-builder" id="src-expr-builder">
+                    <div class="label-row">
+                      <input class="label-input" placeholder="key" style="max-width:90px" oninput="updateYaml()" />
+                      <select class="label-op-select" onchange="updateYaml()">
+                        <option value="In">In</option>
+                        <option value="NotIn">NotIn</option>
+                        <option value="Exists">Exists</option>
+                        <option value="DoesNotExist">!Exists</option>
+                      </select>
+                      <input class="label-input" placeholder="value1, value2" oninput="updateYaml()" />
+                      <button class="label-remove-btn" onclick="removeLabelRow(this)">×</button>
+                    </div>
+                  </div>
+                  <button class="label-add-btn" onclick="addExprRow('src-expr-builder')">+ Add expression</button>
+                  <div class="expr-hint">matchExpressions supports In/NotIn (with values) and Exists/DoesNotExist (no values)</div>
+                </div>
+
+                <!-- deployment -->
+                <div class="editor-panel" id="src-editor-deployment">
+                  <select class="select" id="src-deployment-select" onchange="updateYaml()">
+                    <option value="">Select Deployment…</option>
+                    <option value="frontend-web">frontend-web</option>
+                    <option value="frontend-api">frontend-api</option>
+                    <option value="frontend-worker">frontend-worker</option>
+                  </select>
+                  <div class="expr-hint" style="margin-top:4px">Resolves to pod label selector from the Deployment's spec</div>
+                </div>
+
+                <!-- service account -->
+                <div class="editor-panel" id="src-editor-service-account">
+                  <select class="select" id="src-sa-select" onchange="updateYaml()">
+                    <option value="">Select ServiceAccount…</option>
+                    <option value="default">default</option>
+                    <option value="frontend-sa">frontend-sa</option>
+                    <option value="api-gateway-sa">api-gateway-sa</option>
+                  </select>
+                  <div class="expr-hint" style="margin-top:4px">Uses kubernetes.io/service-account.name label on pods</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Arrow -->
+            <div class="rule-arrow">→</div>
+
+            <!-- Destination col -->
+            <div>
+              <div class="rule-col-label">Destination Pods</div>
+              <div class="ns-context"><span class="ns-dot"></span>backend namespace</div>
+
+              <div class="chip-row" id="dst-chips">
+                <span class="chip" data-type="all" onclick="setDstType('all',this)">
+                  <span class="chip-icon">*</span> All Pods
+                </span>
+                <span class="chip active" data-type="pod-labels" onclick="setDstType('pod-labels',this)">
+                  <span class="chip-icon">🏷</span> Pod Labels
+                </span>
+                <span class="chip" data-type="pod-expr" onclick="setDstType('pod-expr',this)">
+                  <span class="chip-icon">∈</span> Label Expr
+                </span>
+                <span class="chip" data-type="deployment" onclick="setDstType('deployment',this)">
+                  <span class="chip-icon">🚀</span> Deployment
+                </span>
+                <span class="chip" data-type="service-account" onclick="setDstType('service-account',this)">
+                  <span class="chip-icon">🔑</span> ServiceAccount
+                </span>
+                <span class="chip" data-type="ns-labels" onclick="setDstType('ns-labels',this)">
+                  <span class="chip-icon">📦</span> NS Labels
+                </span>
+              </div>
+
+              <div id="dst-editor">
+                <div class="editor-panel" id="dst-editor-all">
+                  <div class="selector-editor">
+                    <div class="selector-summary" style="color:var(--color-text-secondary)">
+                      All pods in <strong style="color:var(--color-accent-text)">backend</strong>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="editor-panel visible" id="dst-editor-pod-labels">
+                  <div class="tokenizer-field" id="dst-token-field" onclick="focusDstInput()">
+                    <span class="token">app=api <button class="token-remove" onclick="removeToken(this,event)">×</button></span>
+                    <span class="token">tier=web <button class="token-remove" onclick="removeToken(this,event)">×</button></span>
+                    <input
+                      class="tokenizer-input"
+                      id="dst-token-input"
+                      placeholder="key=value…"
+                      onkeydown="handleTokenInput(event,'dst-token-field')"
+                      oninput="updateYaml()"
+                    />
+                  </div>
+                  <div class="expr-hint">Press Enter or Tab to add · Backspace to remove last</div>
+                </div>
+
+                <div class="editor-panel" id="dst-editor-pod-expr">
+                  <div class="match-toggle">
+                    <button class="match-toggle-btn active" onclick="setMatchLogic('dst','all',this)">AND</button>
+                    <button class="match-toggle-btn" onclick="setMatchLogic('dst','any',this)">OR</button>
+                  </div>
+                  <div class="label-builder" id="dst-expr-builder">
+                    <div class="label-row">
+                      <input class="label-input" placeholder="key" style="max-width:90px" oninput="updateYaml()" />
+                      <select class="label-op-select" onchange="updateYaml()">
+                        <option value="In">In</option>
+                        <option value="NotIn">NotIn</option>
+                        <option value="Exists">Exists</option>
+                        <option value="DoesNotExist">!Exists</option>
+                      </select>
+                      <input class="label-input" placeholder="value1, value2" oninput="updateYaml()" />
+                      <button class="label-remove-btn" onclick="removeLabelRow(this)">×</button>
+                    </div>
+                  </div>
+                  <button class="label-add-btn" onclick="addExprRow('dst-expr-builder')">+ Add expression</button>
+                  <div class="expr-hint">matchExpressions: set-based label selection</div>
+                </div>
+
+                <div class="editor-panel" id="dst-editor-deployment">
+                  <select class="select" id="dst-deployment-select" onchange="updateYaml()">
+                    <option value="">Select Deployment…</option>
+                    <option value="api-server">api-server</option>
+                    <option value="data-service">data-service</option>
+                    <option value="cache-proxy">cache-proxy</option>
+                  </select>
+                </div>
+
+                <div class="editor-panel" id="dst-editor-service-account">
+                  <select class="select" id="dst-sa-select" onchange="updateYaml()">
+                    <option value="">Select ServiceAccount…</option>
+                    <option value="default">default</option>
+                    <option value="backend-sa">backend-sa</option>
+                    <option value="db-service-sa">db-service-sa</option>
+                  </select>
+                </div>
+
+                <div class="editor-panel" id="dst-editor-ns-labels">
+                  <div class="label-builder" id="dst-ns-label-builder">
+                    <div class="label-row">
+                      <input class="label-input" placeholder="key" style="max-width:80px" oninput="updateYaml()" />
+                      <select class="label-op-select" onchange="updateYaml()">
+                        <option>=</option>
+                        <option>!=</option>
+                      </select>
+                      <input class="label-input" placeholder="value" oninput="updateYaml()" />
+                      <button class="label-remove-btn" onclick="removeLabelRow(this)">×</button>
+                    </div>
+                  </div>
+                  <button class="label-add-btn" onclick="addLabelRow('dst-ns-label-builder')">+ Add NS label</button>
+                  <div class="expr-hint">Selects pods in any namespace matching these labels (cross-NS)</div>
+                </div>
+              </div>
+            </div>
+          </div><!-- /rule-grid -->
+
+          <div class="spacer-md"></div>
+
+          <!-- Port / Protocol -->
+          <div>
+            <label class="field-label">Port / Protocol</label>
+
+            <!-- Quick chips -->
+            <div class="port-list" id="port-chips">
+              <span class="chip active" onclick="togglePortChip(this,'tcp','443')">TCP 443</span>
+              <span class="chip" onclick="togglePortChip(this,'tcp','8080')">TCP 8080</span>
+              <span class="chip" onclick="togglePortChip(this,'tcp','3306')">TCP 3306</span>
+              <span class="chip" onclick="togglePortChip(this,'udp','53')">UDP 53</span>
+              <span class="chip" data-all onclick="setAllPorts(this)">All Ports</span>
+            </div>
+
+            <!-- Custom port row -->
+            <div style="display:flex;gap:8px;align-items:center">
+              <select class="select" id="custom-proto" style="width:90px;" onchange="updateYaml()">
+                <option>TCP</option>
+                <option>UDP</option>
+                <option>SCTP</option>
+              </select>
+              <input class="input" id="custom-port" placeholder="Port or range (e.g. 9000 or 9000-9090)" style="flex:1" oninput="updateYaml()" />
+              <button class="btn btn-ghost" onclick="addCustomPort()" style="white-space:nowrap">+ Add</button>
+            </div>
+
+            <!-- Named port toggle -->
+            <div style="margin-top:var(--spacing-sm)">
+              <label style="display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--color-text-secondary);cursor:pointer">
+                <input type="checkbox" id="use-named-port" onchange="updateYaml()" style="accent-color:var(--color-accent)"> Use named port (e.g. "http", "metrics")
+              </label>
+            </div>
+          </div>
+
+        </div><!-- /section-body -->
+      </div><!-- /rule section-card -->
+
+      <!-- Info banner -->
+      <div class="info-banner">
+        <span class="icon">ℹ</span>
+        <span>This rule targets <strong>NS→NS Same Cluster</strong> — output will be a native <code>NetworkPolicy</code> resource. No Illumio label lookups required.</span>
+      </div>
+
+    </div><!-- /panel-body -->
+
+    <div class="panel-footer">
+      <button class="btn btn-ghost">Cancel</button>
+      <button class="btn btn-ghost">Save Draft</button>
+      <button class="btn btn-primary" id="add-rule-btn">Add Rule →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Right: Live preview ──────────────────────────────────────────────── -->
+<div class="preview-panel">
+  <div class="page-label">Live Preview</div>
+
+  <div class="preview-card">
+    <div class="preview-card-header">NetworkPolicy YAML</div>
+    <div class="preview-card-body">
+      <div class="yaml-block" id="yaml-preview"><!-- filled by JS --></div>
+    </div>
+  </div>
+
+  <div class="preview-card">
+    <div class="preview-card-header">Rule Summary</div>
+    <div class="preview-card-body">
+      <div id="rule-summary" style="font-size:12px;color:var(--color-text-secondary);line-height:1.7"></div>
+    </div>
+  </div>
+
+  <div class="preview-card">
+    <div class="preview-card-header">Selector Type Reference</div>
+    <div class="preview-card-body">
+      <table style="width:100%;border-collapse:collapse;font-size:11px;">
+        <thead>
+          <tr>
+            <th style="text-align:left;color:var(--color-text-secondary);padding:4px 0;border-bottom:1px solid var(--color-border)">Type</th>
+            <th style="text-align:left;color:var(--color-text-secondary);padding:4px 0;border-bottom:1px solid var(--color-border)">K8s Field</th>
+          </tr>
+        </thead>
+        <tbody id="type-ref-table">
+          <tr><td style="padding:5px 0;color:var(--color-accent-text);font-weight:600">All Pods</td><td style="color:var(--color-text-secondary)">podSelector: {}</td></tr>
+          <tr><td style="padding:5px 0;color:var(--color-text)">Pod Labels</td><td style="color:var(--color-text-secondary)">matchLabels: {k:v}</td></tr>
+          <tr><td style="padding:5px 0;color:var(--color-text)">Label Expr</td><td style="color:var(--color-text-secondary)">matchExpressions: [...]</td></tr>
+          <tr><td style="padding:5px 0;color:var(--color-text)">Deployment</td><td style="color:var(--color-text-secondary)">→ pod label selector</td></tr>
+          <tr><td style="padding:5px 0;color:var(--color-text)">ServiceAccount</td><td style="color:var(--color-text-secondary)">k8s:serviceaccount label</td></tr>
+          <tr><td style="padding:5px 0;color:var(--color-text)">NS Labels</td><td style="color:var(--color-text-secondary)">namespaceSelector</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+  /* ── State ─────────────────────────────────────────────────────────────── */
+  const state = {
+    direction: 'both',
+    srcType: 'all',
+    dstType: 'pod-labels',
+    ports: [{ proto: 'TCP', port: '443' }],
+    allPorts: false,
+  };
+
+  /* ── Direction ─────────────────────────────────────────────────────────── */
+  const directionHints = {
+    ingress: 'Applies to inbound traffic into destination namespace pods',
+    egress:  'Applies to outbound traffic from source namespace pods',
+    both:    'Generates paired ingress + egress rules for bidirectional communication',
+  };
+
+  function setDirection(dir, btn) {
+    state.direction = dir;
+    document.querySelectorAll('.direction-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('direction-hint').textContent = directionHints[dir];
+    updateYaml();
+  }
+
+  /* ── Section toggle ────────────────────────────────────────────────────── */
+  function toggleSection(id) {
+    const body = document.getElementById(id + '-body');
+    const chevron = document.getElementById(id + '-chevron');
+    const isOpen = body.style.display !== 'none';
+    body.style.display = isOpen ? 'none' : 'block';
+    chevron.textContent = isOpen ? '▶' : '▼';
+  }
+
+  /* ── Selector type switching ───────────────────────────────────────────── */
+  function setSrcType(type, chip) {
+    state.srcType = type;
+    document.querySelectorAll('#src-chips .chip').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    document.querySelectorAll('#src-editor .editor-panel').forEach(p => p.classList.remove('visible'));
+    const panel = document.getElementById('src-editor-' + type);
+    if (panel) panel.classList.add('visible');
+    updateYaml();
+  }
+
+  function setDstType(type, chip) {
+    state.dstType = type;
+    document.querySelectorAll('#dst-chips .chip').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    document.querySelectorAll('#dst-editor .editor-panel').forEach(p => p.classList.remove('visible'));
+    const panel = document.getElementById('dst-editor-' + type);
+    if (panel) panel.classList.add('visible');
+    updateYaml();
+  }
+
+  /* ── Label builder ─────────────────────────────────────────────────────── */
+  function addLabelRow(builderId) {
+    const builder = document.getElementById(builderId);
+    const row = document.createElement('div');
+    row.className = 'label-row';
+    row.innerHTML = `
+      <input class="label-input" placeholder="key" style="max-width:80px" oninput="updateYaml()" />
+      <select class="label-op-select" onchange="updateYaml()">
+        <option>=</option><option>!=</option>
+      </select>
+      <input class="label-input" placeholder="value" oninput="updateYaml()" />
+      <button class="label-remove-btn" onclick="removeLabelRow(this)">×</button>
+    `;
+    builder.appendChild(row);
+    row.querySelector('input').focus();
+  }
+
+  function addExprRow(builderId) {
+    const builder = document.getElementById(builderId);
+    const row = document.createElement('div');
+    row.className = 'label-row';
+    row.innerHTML = `
+      <input class="label-input" placeholder="key" style="max-width:90px" oninput="updateYaml()" />
+      <select class="label-op-select" onchange="updateYaml()">
+        <option value="In">In</option>
+        <option value="NotIn">NotIn</option>
+        <option value="Exists">Exists</option>
+        <option value="DoesNotExist">!Exists</option>
+      </select>
+      <input class="label-input" placeholder="value1, value2" oninput="updateYaml()" />
+      <button class="label-remove-btn" onclick="removeLabelRow(this)">×</button>
+    `;
+    builder.appendChild(row);
+    row.querySelector('input').focus();
+  }
+
+  function removeLabelRow(btn) {
+    btn.closest('.label-row').remove();
+    updateYaml();
+  }
+
+  /* ── Match logic toggle ────────────────────────────────────────────────── */
+  function setMatchLogic(side, logic, btn) {
+    const group = btn.closest('.match-toggle');
+    group.querySelectorAll('.match-toggle-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  }
+
+  /* ── Tokenizer ─────────────────────────────────────────────────────────── */
+  function focusDstInput() {
+    document.getElementById('dst-token-input').focus();
+  }
+
+  function handleTokenInput(evt, fieldId) {
+    const input = evt.target;
+    if ((evt.key === 'Enter' || evt.key === 'Tab') && input.value.trim()) {
+      evt.preventDefault();
+      addToken(fieldId, input.value.trim());
+      input.value = '';
+      updateYaml();
+    } else if (evt.key === 'Backspace' && input.value === '') {
+      const field = document.getElementById(fieldId);
+      const tokens = field.querySelectorAll('.token');
+      if (tokens.length > 0) {
+        tokens[tokens.length - 1].remove();
+        updateYaml();
+      }
+    }
+  }
+
+  function addToken(fieldId, value) {
+    const field = document.getElementById(fieldId);
+    const input = field.querySelector('.tokenizer-input');
+    const token = document.createElement('span');
+    token.className = 'token';
+    token.innerHTML = `${escapeHtml(value)} <button class="token-remove" onclick="removeToken(this,event)">×</button>`;
+    field.insertBefore(token, input);
+  }
+
+  function removeToken(btn, evt) {
+    evt.stopPropagation();
+    btn.closest('.token').remove();
+    updateYaml();
+  }
+
+  /* ── Port chips ────────────────────────────────────────────────────────── */
+  function togglePortChip(chip, proto, port) {
+    if (chip.dataset.all !== undefined) return; // handled by setAllPorts
+    chip.classList.toggle('active');
+    state.allPorts = false;
+    document.querySelector('[data-all]').classList.remove('active');
+    syncPortState();
+    updateYaml();
+  }
+
+  function setAllPorts(chip) {
+    state.allPorts = !chip.classList.contains('active');
+    document.querySelectorAll('#port-chips .chip:not([data-all])').forEach(c => c.classList.remove('active'));
+    chip.classList.toggle('active', state.allPorts);
+    syncPortState();
+    updateYaml();
+  }
+
+  function syncPortState() {
+    state.ports = [];
+    document.querySelectorAll('#port-chips .chip.active:not([data-all])').forEach(c => {
+      const [proto, port] = c.textContent.trim().split(' ');
+      state.ports.push({ proto, port });
+    });
+  }
+
+  function addCustomPort() {
+    const proto = document.getElementById('custom-proto').value;
+    const port  = document.getElementById('custom-port').value.trim();
+    if (!port) return;
+    const label = `${proto} ${port}`;
+    const chips = document.getElementById('port-chips');
+    const addBtn = chips.querySelector('[data-all]');
+    const chip = document.createElement('span');
+    chip.className = 'chip active';
+    chip.textContent = label;
+    chip.onclick = () => { chip.classList.toggle('active'); syncPortState(); updateYaml(); };
+    chips.insertBefore(chip, addBtn);
+    document.getElementById('custom-port').value = '';
+    syncPortState();
+    updateYaml();
+  }
+
+  /* ── YAML generation ───────────────────────────────────────────────────── */
+  function collectSrcSelector() {
+    switch (state.srcType) {
+      case 'all': return null; // empty podSelector
+      case 'pod-labels': {
+        const rows = document.querySelectorAll('#src-label-builder .label-row');
+        const labels = {};
+        rows.forEach(row => {
+          const inputs = row.querySelectorAll('input');
+          if (inputs[0].value && inputs[1].value) labels[inputs[0].value] = inputs[1].value;
+        });
+        return Object.keys(labels).length ? { matchLabels: labels } : null;
+      }
+      case 'pod-expr': {
+        const exprs = [];
+        document.querySelectorAll('#src-expr-builder .label-row').forEach(row => {
+          const k = row.querySelectorAll('input')[0].value;
+          const op = row.querySelector('select').value;
+          const vals = row.querySelectorAll('input')[1].value.split(',').map(v=>v.trim()).filter(Boolean);
+          if (k) exprs.push({ key: k, operator: op, values: vals.length ? vals : undefined });
+        });
+        return exprs.length ? { matchExpressions: exprs } : null;
+      }
+      case 'deployment': {
+        const v = document.getElementById('src-deployment-select').value;
+        return v ? { matchLabels: { 'app': v } } : null;
+      }
+      case 'service-account': {
+        const v = document.getElementById('src-sa-select').value;
+        return v ? { matchLabels: { 'kubernetes.io/service-account.name': v } } : null;
+      }
+    }
+    return null;
+  }
+
+  function collectDstSelector() {
+    switch (state.dstType) {
+      case 'all': return { pod: null, ns: null };
+      case 'pod-labels': {
+        const field = document.getElementById('dst-token-field');
+        const tokens = [...field.querySelectorAll('.token')].map(t => t.textContent.trim().replace('×','').trim());
+        const labels = {};
+        tokens.forEach(t => {
+          const [k,...vs] = t.split('='); if(k && vs.length) labels[k.trim()] = vs.join('=').trim();
+        });
+        return { pod: Object.keys(labels).length ? { matchLabels: labels } : null, ns: null };
+      }
+      case 'pod-expr': {
+        const exprs = [];
+        document.querySelectorAll('#dst-expr-builder .label-row').forEach(row => {
+          const k = row.querySelectorAll('input')[0].value;
+          const op = row.querySelector('select').value;
+          const vals = row.querySelectorAll('input')[1].value.split(',').map(v=>v.trim()).filter(Boolean);
+          if (k) exprs.push({ key: k, operator: op, values: vals.length ? vals : undefined });
+        });
+        return { pod: exprs.length ? { matchExpressions: exprs } : null, ns: null };
+      }
+      case 'deployment': {
+        const v = document.getElementById('dst-deployment-select').value;
+        return { pod: v ? { matchLabels: { 'app': v } } : null, ns: null };
+      }
+      case 'service-account': {
+        const v = document.getElementById('dst-sa-select').value;
+        return { pod: v ? { matchLabels: { 'kubernetes.io/service-account.name': v } } : null, ns: null };
+      }
+      case 'ns-labels': {
+        const rows = document.querySelectorAll('#dst-ns-label-builder .label-row');
+        const labels = {};
+        rows.forEach(row => {
+          const inputs = row.querySelectorAll('input');
+          if (inputs[0].value && inputs[1].value) labels[inputs[0].value] = inputs[1].value;
+        });
+        return { pod: null, ns: Object.keys(labels).length ? { matchLabels: labels } : null };
+      }
+    }
+    return { pod: null, ns: null };
+  }
+
+  function buildYaml() {
+    const src = collectSrcSelector();
+    const dst = collectDstSelector();
+    const dir = state.direction;
+
+    // Port lines
+    const useNamedPort = document.getElementById('use-named-port').checked;
+    let portLines = '';
+    if (state.allPorts) {
+      portLines = '  - ports: []\n';
+    } else if (state.ports.length) {
+      state.ports.forEach(p => {
+        portLines += `  - protocol: ${p.proto}\n    port: ${p.port}\n`;
+      });
+    } else {
+      portLines = '  # no ports selected\n';
+    }
+
+    // podSelector block
+    function podSel(sel, indent) {
+      const i = indent || '    ';
+      if (!sel) return i + 'podSelector: {}\n';
+      if (sel.matchLabels) {
+        let s = i + 'podSelector:\n' + i + '  matchLabels:\n';
+        Object.entries(sel.matchLabels).forEach(([k,v]) => s += i + `    ${k}: ${v}\n`);
+        return s;
+      }
+      if (sel.matchExpressions) {
+        let s = i + 'podSelector:\n' + i + '  matchExpressions:\n';
+        sel.matchExpressions.forEach(e => {
+          s += i + `  - key: ${e.key}\n` + i + `    operator: ${e.operator}\n`;
+          if (e.values?.length) s += i + '    values:\n' + e.values.map(v => i + `    - ${v}\n`).join('');
+        });
+        return s;
+      }
+      return i + 'podSelector: {}\n';
+    }
+
+    function nsSel(sel, indent) {
+      if (!sel) return '';
+      const i = indent || '    ';
+      if (sel.matchLabels) {
+        let s = i + 'namespaceSelector:\n' + i + '  matchLabels:\n';
+        Object.entries(sel.matchLabels).forEach(([k,v]) => s += i + `    ${k}: ${v}\n`);
+        return s;
+      }
+      return '';
+    }
+
+    // Build ingress / egress blocks
+    let ingressBlock = '', egressBlock = '';
+
+    if (dir === 'ingress' || dir === 'both') {
+      ingressBlock = 'ingress:\n';
+      ingressBlock += '- from:\n';
+      if (src) {
+        ingressBlock += podSel(src, '  - ');
+      } else {
+        ingressBlock += '  - podSelector: {}\n';
+      }
+      ingressBlock += '  namespaceSelector:\n    matchLabels:\n      kubernetes.io/metadata.name: frontend\n';
+      ingressBlock += '  ports:\n';
+      if (state.allPorts) {
+        ingressBlock += '  # allow all ports\n';
+      } else {
+        state.ports.forEach(p => { ingressBlock += `  - protocol: ${p.proto}\n    port: ${p.port}\n`; });
+      }
+    }
+
+    if (dir === 'egress' || dir === 'both') {
+      egressBlock = 'egress:\n';
+      egressBlock += '- to:\n';
+      const dstPod = dst?.pod;
+      const dstNs  = dst?.ns;
+      if (!dstPod && !dstNs) {
+        egressBlock += '  - podSelector: {}\n';
+        egressBlock += '    namespaceSelector:\n      matchLabels:\n        kubernetes.io/metadata.name: backend\n';
+      } else {
+        if (dstPod)  egressBlock += podSel(dstPod, '  - ');
+        if (!dstNs)  egressBlock += '    namespaceSelector:\n      matchLabels:\n        kubernetes.io/metadata.name: backend\n';
+        if (dstNs)   egressBlock += nsSel(dstNs, '  ');
+      }
+      egressBlock += '  ports:\n';
+      if (state.allPorts) {
+        egressBlock += '  # allow all ports\n';
+      } else {
+        state.ports.forEach(p => { egressBlock += `  - protocol: ${p.proto}\n    port: ${p.port}\n`; });
+      }
+    }
+
+    const types = dir === 'ingress' ? '- Ingress' : dir === 'egress' ? '- Egress' : '- Ingress\n  - Egress';
+
+    return (
+`apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: frontend-to-backend
+  namespace: backend
+spec:
+  podSelector: {}
+  policyTypes:
+  ${types}
+  ${(ingressBlock + egressBlock).trim()}
+`);
+  }
+
+  function updateYaml() {
+    const yaml = buildYaml();
+    const el = document.getElementById('yaml-preview');
+    el.innerHTML = colorizeYaml(yaml);
+    updateSummary();
+  }
+
+  function colorizeYaml(yaml) {
+    return yaml
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      .replace(/^(  *)([a-zA-Z][a-zA-Z0-9\-/\.]+):/gm, '$1<span class="yaml-key">$2</span>:')
+      .replace(/: (.+)$/gm, ': <span class="yaml-value">$1</span>')
+      .replace(/^(  *)#(.*)$/gm, '$1<span class="yaml-comment">#$2</span>');
+  }
+
+  function updateSummary() {
+    const dir = { ingress:'Ingress only', egress:'Egress only', both:'Bidirectional (Ingress + Egress)' }[state.direction];
+    const srcLabel = { all:'All pods', 'pod-labels':'Pod label selector', 'pod-expr':'Label expressions', deployment:'Deployment pods', 'service-account':'ServiceAccount pods' }[state.srcType] || state.srcType;
+    const dstLabel = { all:'All pods', 'pod-labels':'Pod label selector', 'pod-expr':'Label expressions', deployment:'Deployment pods', 'service-account':'ServiceAccount pods', 'ns-labels':'Namespace label selector' }[state.dstType] || state.dstType;
+    const ports = state.allPorts ? 'All ports' : state.ports.length ? state.ports.map(p=>`${p.proto}:${p.port}`).join(', ') : 'None selected';
+
+    document.getElementById('rule-summary').innerHTML = `
+      <div><strong style="color:var(--color-text)">Direction:</strong> ${dir}</div>
+      <div><strong style="color:var(--color-text)">Source:</strong> ${srcLabel} (frontend ns)</div>
+      <div><strong style="color:var(--color-text)">Destination:</strong> ${dstLabel} (backend ns)</div>
+      <div><strong style="color:var(--color-text)">Ports:</strong> ${ports}</div>
+    `;
+  }
+
+  function escapeHtml(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  /* ── Init ──────────────────────────────────────────────────────────────── */
+  updateYaml();
+</script>
+</body>
+</html>
