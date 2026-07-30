@@ -1,12 +1,23 @@
 import {useState, useMemo} from 'react';
-import {PowerSearch} from '@astryxdesign/core/PowerSearch';
-import type {PowerSearchFilter} from '@astryxdesign/core/PowerSearch';
+import {PowerSearch, PowerSearchFilterEditor} from '@astryxdesign/core/PowerSearch';
+import type {PowerSearchFilter, PowerSearchEditorProps} from '@astryxdesign/core/PowerSearch';
 import {Banner} from '@astryxdesign/core/Banner';
 import {Button} from '@astryxdesign/core/Button';
 import {Text} from '@astryxdesign/core/Text';
 import {buildSelectorConfig} from './selectorConfig';
 import {getConflictingCategories, getConflictWarning} from './mutualExclusion';
 import type {SelectorSide, SelectorCategory} from './types';
+
+// Wraps the default editor so the value input stacks below the field+operator row
+function VerticalEditor(props: PowerSearchEditorProps) {
+  return (
+    <div style={{display: 'flex', flexDirection: 'column'}}>
+      <PowerSearchFilterEditor {...props} />
+    </div>
+  );
+}
+
+const VERTICAL_COMPONENTS = {custom: {Editor: VerticalEditor}};
 
 interface Props {
   label: string;
@@ -90,6 +101,7 @@ export default function SelectorPowerSearch({
         onChange={handleChange}
         placeholder={`Select ${label}...`}
         isDisabled={isDisabled}
+        components={VERTICAL_COMPONENTS}
       />
     </div>
   );
