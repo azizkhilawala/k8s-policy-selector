@@ -8,39 +8,34 @@ describe('SelectorPowerSearch', () => {
         label="Sources"
         side="source"
         filters={[]}
-        clusters={[]}
         onFiltersChange={() => {}}
-        onClustersChange={() => {}}
       />,
     );
-    expect(screen.getByPlaceholderText('Add source selector...')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Select Sources...')).toBeInTheDocument();
   });
 
-  it('renders Add cluster button', () => {
+  it('renders with destination placeholder', () => {
     render(
       <SelectorPowerSearch
         label="Destinations"
         side="destination"
         filters={[]}
-        clusters={[]}
         onFiltersChange={() => {}}
-        onClustersChange={() => {}}
       />,
     );
-    expect(screen.getByText('+ Add cluster')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Select Destinations...')).toBeInTheDocument();
   });
 
-  it('shows cluster token when cluster is present', () => {
+  it('renders required label with asterisk', () => {
     render(
       <SelectorPowerSearch
         label="Sources"
         side="source"
         filters={[]}
-        clusters={[{type: 'aws', accountId: '123', region: 'us-east-1', clusterName: 'prod-eks'}]}
         onFiltersChange={() => {}}
-        onClustersChange={() => {}}
+        isRequired
       />,
     );
-    expect(screen.getByText('prod-eks (us-east-1)')).toBeInTheDocument();
+    expect(screen.getByText('* Sources')).toBeInTheDocument();
   });
 });

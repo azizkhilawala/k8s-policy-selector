@@ -3,24 +3,21 @@ import {PowerSearch} from '@astryxdesign/core/PowerSearch';
 import type {PowerSearchFilter} from '@astryxdesign/core/PowerSearch';
 import {Banner} from '@astryxdesign/core/Banner';
 import {Button} from '@astryxdesign/core/Button';
-import ClusterSelector from './ClusterSelector';
 import {buildSelectorConfig} from './selectorConfig';
 import {getConflictingCategories, getConflictWarning} from './mutualExclusion';
-import type {SelectorSide, ClusterRef, SelectorCategory} from './types';
+import type {SelectorSide, SelectorCategory} from './types';
 
 interface Props {
   label: string;
   side: SelectorSide;
   filters: ReadonlyArray<PowerSearchFilter>;
-  clusters: ClusterRef[];
   onFiltersChange: (filters: ReadonlyArray<PowerSearchFilter>) => void;
-  onClustersChange: (clusters: ClusterRef[]) => void;
   isRequired?: boolean;
   isDisabled?: boolean;
 }
 
 export default function SelectorPowerSearch({
-  label, side, filters, clusters, onFiltersChange, onClustersChange, isRequired, isDisabled,
+  label, side, filters, onFiltersChange, isRequired, isDisabled,
 }: Props) {
   const config = useMemo(() => buildSelectorConfig(side), [side]);
   const [pendingFilters, setPendingFilters] = useState<ReadonlyArray<PowerSearchFilter> | null>(null);
@@ -67,8 +64,6 @@ export default function SelectorPowerSearch({
 
   return (
     <div style={{display: 'flex', flexDirection: 'column', gap: 'var(--spacing-2)'}}>
-      <ClusterSelector clusters={clusters} onChange={onClustersChange} isDisabled={isDisabled} />
-
       {conflictWarning && (
         <Banner
           status="warning"
@@ -87,7 +82,7 @@ export default function SelectorPowerSearch({
         config={config}
         filters={filters}
         onChange={handleChange}
-        placeholder={`Add ${side} selector...`}
+        placeholder={`Select ${label}...`}
         isDisabled={isDisabled}
       />
     </div>

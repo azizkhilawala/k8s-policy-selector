@@ -7,7 +7,7 @@ import {Text} from '@astryxdesign/core/Text';
 import SelectorPowerSearch from './SelectorPowerSearch';
 import RuleOptionsSelector from './RuleOptionsSelector';
 import {buildPortRangeConfig} from './selectorConfig';
-import type {RuleFormValue, ClusterRef, RuleOption} from './types';
+import type {RuleFormValue, RuleOption} from './types';
 
 const RULE_TYPE_OPTIONS = [
   {value: 'allow', label: 'Allow Rule'},
@@ -29,25 +29,23 @@ export default function AddRulePanel({onSave, onCancel}: Props) {
   const [ruleType, setRuleType] = useState<RuleFormValue['ruleType']>('allow');
   const [sourceScopeType, setSourceScopeType] = useState<RuleFormValue['sourceScopeType']>('intra_scope');
   const [sourceFilters, setSourceFilters] = useState<ReadonlyArray<PowerSearchFilter>>([]);
-  const [sourceClusters, setSourceClusters] = useState<ClusterRef[]>([]);
-  const [destinationFilters, setDestinationFilters] = useState<ReadonlyArray<PowerSearchFilter>>([]);
-  const [destinationClusters, setDestinationClusters] = useState<ClusterRef[]>([]);
   const [sourceProcessFilters, setSourceProcessFilters] = useState<ReadonlyArray<PowerSearchFilter>>([]);
+  const [destinationFilters, setDestinationFilters] = useState<ReadonlyArray<PowerSearchFilter>>([]);
   const [portRangeFilters, setPortRangeFilters] = useState<ReadonlyArray<PowerSearchFilter>>([]);
   const [ruleOptions, setRuleOptions] = useState<RuleOption[]>([]);
 
-  const portRangeConfig = useMemo(() => buildPortRangeConfig(), []);
   const sourceProcessConfig = useMemo(() => buildPortRangeConfig(), []);
+  const portRangeConfig = useMemo(() => buildPortRangeConfig(), []);
 
   const handleSave = () => {
     onSave({
       ruleType,
       sourceScopeType,
-      sources: [],        // parent maps filters → SelectorValue
-      sourceClusters,
+      sources: [],
+      sourceClusters: [],
       sourceProcessServices: [],
       destinations: [],
-      destinationClusters,
+      destinationClusters: [],
       destinationServices: [],
       ruleOptions,
     });
@@ -69,8 +67,9 @@ export default function AddRulePanel({onSave, onCancel}: Props) {
 
       {/* Body */}
       <div style={{flex: 1, overflowY: 'auto', padding: 'var(--spacing-4)', display: 'flex', flexDirection: 'column', gap: 'var(--spacing-4)'}}>
+
         <Selector
-          label="* Rule Type"
+          label="Rule Type"
           value={ruleType}
           options={RULE_TYPE_OPTIONS}
           onChange={v => setRuleType(v as RuleFormValue['ruleType'])}
@@ -78,7 +77,7 @@ export default function AddRulePanel({onSave, onCancel}: Props) {
         />
 
         <Selector
-          label="* Source Scope Type"
+          label="Source Scope Type"
           value={sourceScopeType}
           options={SCOPE_TYPE_OPTIONS}
           onChange={v => setSourceScopeType(v as RuleFormValue['sourceScopeType'])}
@@ -89,36 +88,32 @@ export default function AddRulePanel({onSave, onCancel}: Props) {
           label="Sources"
           side="source"
           filters={sourceFilters}
-          clusters={sourceClusters}
           onFiltersChange={setSourceFilters}
-          onClustersChange={setSourceClusters}
           isRequired
         />
 
         <PowerSearch
-          label="Source Process/Services"
+          label="Source Process / Service"
           config={sourceProcessConfig}
           filters={sourceProcessFilters}
           onChange={f => setSourceProcessFilters([...f])}
-          placeholder="Add process or service port..."
+          placeholder="Select Source Process / Service..."
         />
 
         <SelectorPowerSearch
           label="Destinations"
           side="destination"
           filters={destinationFilters}
-          clusters={destinationClusters}
           onFiltersChange={setDestinationFilters}
-          onClustersChange={setDestinationClusters}
           isRequired
         />
 
         <PowerSearch
-          label="* Destination Services"
+          label="Destination Services"
           config={portRangeConfig}
           filters={portRangeFilters}
           onChange={f => setPortRangeFilters([...f])}
-          placeholder="Add port range..."
+          placeholder="Select Destination Services..."
           isRequired
         />
 

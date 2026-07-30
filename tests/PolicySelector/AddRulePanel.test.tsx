@@ -5,11 +5,12 @@ describe('AddRulePanel', () => {
   it('renders all required fields', () => {
     render(<AddRulePanel onSave={() => {}} onCancel={() => {}} />);
     expect(screen.getByText('Add Rule')).toBeInTheDocument();
-    expect(screen.getByText('* Rule Type')).toBeInTheDocument();
-    expect(screen.getByText('* Source Scope Type')).toBeInTheDocument();
-    expect(screen.getByPlaceholderText('Add source selector...')).toBeInTheDocument();
-    expect(screen.getByPlaceholderText('Add destination selector...')).toBeInTheDocument();
-    expect(screen.getByPlaceholderText('Add port range...')).toBeInTheDocument();
+    expect(screen.getByText('* Sources')).toBeInTheDocument();
+    expect(screen.getByText('* Destinations')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Select Sources...')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Select Destinations...')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Select Source Process / Service...')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Select Destination Services...')).toBeInTheDocument();
   });
 
   it('calls onCancel when Cancel is clicked', () => {
