@@ -1,11 +1,6 @@
-import type {SelectorValue, K8sExpression, ClusterRef, PortRange, RuleFormValue} from '../../src/components/PolicySelector/types';
+import type {SelectorValue, ClusterRef, PortRange} from '../../src/components/PolicySelector/types';
 
 describe('types', () => {
-  it('K8sExpression accepts empty values for exists operator', () => {
-    const expr: K8sExpression = {key: 'app', operator: 'exists', values: []};
-    expect(expr.values).toHaveLength(0);
-  });
-
   it('ClusterRef discriminated union narrows correctly', () => {
     const ref: ClusterRef = {type: 'aws', accountId: '123', region: 'us-east-1', clusterName: 'prod'};
     if (ref.type === 'aws') {
@@ -19,12 +14,12 @@ describe('types', () => {
   });
 
   it('SelectorValue category discriminates k8s_labels', () => {
-    const val: SelectorValue = {
-      category: 'k8s_labels',
-      clusters: [],
-      scope: 'workload',
-      expressions: [],
-    };
+    const val: SelectorValue = {category: 'k8s_labels', labels: ['app=frontend']};
     expect(val.category).toBe('k8s_labels');
+  });
+
+  it('SelectorValue category discriminates illumio_labels', () => {
+    const val: SelectorValue = {category: 'illumio_labels', labels: ['Role:web', 'Env:Production']};
+    expect(val.category).toBe('illumio_labels');
   });
 });
