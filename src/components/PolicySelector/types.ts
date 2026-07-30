@@ -133,6 +133,7 @@ export interface RuleFormValue {
   sourceScopeType: 'intra_scope' | 'extra_scope';
   sources: SelectorValue[];
   sourceClusters: ClusterRef[];
+  sourceProcessServices: PortRange[];
   destinations: SelectorValue[];
   destinationClusters: ClusterRef[];
   destinationServices: PortRange[];

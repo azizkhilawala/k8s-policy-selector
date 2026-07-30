@@ -32,10 +32,12 @@ export default function AddRulePanel({onSave, onCancel}: Props) {
   const [sourceClusters, setSourceClusters] = useState<ClusterRef[]>([]);
   const [destinationFilters, setDestinationFilters] = useState<ReadonlyArray<PowerSearchFilter>>([]);
   const [destinationClusters, setDestinationClusters] = useState<ClusterRef[]>([]);
+  const [sourceProcessFilters, setSourceProcessFilters] = useState<ReadonlyArray<PowerSearchFilter>>([]);
   const [portRangeFilters, setPortRangeFilters] = useState<ReadonlyArray<PowerSearchFilter>>([]);
   const [ruleOptions, setRuleOptions] = useState<RuleOption[]>([]);
 
   const portRangeConfig = useMemo(() => buildPortRangeConfig(), []);
+  const sourceProcessConfig = useMemo(() => buildPortRangeConfig(), []);
 
   const handleSave = () => {
     onSave({
@@ -43,6 +45,7 @@ export default function AddRulePanel({onSave, onCancel}: Props) {
       sourceScopeType,
       sources: [],        // parent maps filters → SelectorValue
       sourceClusters,
+      sourceProcessServices: [],
       destinations: [],
       destinationClusters,
       destinationServices: [],
@@ -90,6 +93,14 @@ export default function AddRulePanel({onSave, onCancel}: Props) {
           onFiltersChange={setSourceFilters}
           onClustersChange={setSourceClusters}
           isRequired
+        />
+
+        <PowerSearch
+          label="Source Process/Services"
+          config={sourceProcessConfig}
+          filters={sourceProcessFilters}
+          onChange={f => setSourceProcessFilters([...f])}
+          placeholder="Add process or service port..."
         />
 
         <SelectorPowerSearch
