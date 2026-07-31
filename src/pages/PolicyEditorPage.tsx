@@ -5,10 +5,10 @@ import {Text} from '@astryxdesign/core/Text';
 import PolicyHeader from '../components/Policy/PolicyHeader';
 import RulesToolbar from '../components/Policy/RulesToolbar';
 import RulesTable from '../components/Policy/RulesTable';
+import InlineRuleEditor from '../components/Policy/InlineRuleEditor';
 import ProvisionBar from '../components/Policy/ProvisionBar';
 import ProvisionDialog from '../components/Policy/ProvisionDialog';
 import ImpactPanel from '../components/Policy/ImpactPanel';
-import AddRulePanel from '../components/PolicySelector/AddRulePanel';
 import type {usePolicyStore} from '../stores/policyStore';
 import type {Policy, Rule, PolicyType, EnforcementMode} from '../components/Policy/types';
 import type {RuleFormValue} from '../components/PolicySelector/types';
@@ -178,6 +178,14 @@ export default function PolicyEditorPage({policyId, onBack, store}: Props) {
         />
 
         <div style={{flex: 1, overflowY: 'auto'}}>
+          {addRulePanelOpen && (
+            <InlineRuleEditor
+              onSave={handleAddRule}
+              onCancel={() => { setAddRulePanelOpen(false); setEditingRule(null); }}
+              editingRule={editingRule ?? undefined}
+              environment={policy.environment}
+            />
+          )}
           <RulesTable
             rules={filteredRules}
             onEdit={rule => { setEditingRule(rule); setAddRulePanelOpen(true); }}
@@ -192,33 +200,6 @@ export default function PolicyEditorPage({policyId, onBack, store}: Props) {
           onProvision={() => setProvisionDialogOpen(true)}
         />
       </div>
-
-      {addRulePanelOpen && (
-        <div style={{position: 'fixed', right: 0, top: 0, bottom: 0, display: 'flex', flexDirection: 'column', zIndex: 800}}>
-          {editingRule && (
-            <Banner
-              status="info"
-              title="Sources and destinations must be reselected when editing a rule."
-            />
-          )}
-          <AddRulePanel
-            onSave={handleAddRule}
-            onCancel={() => { setAddRulePanelOpen(false); setEditingRule(null); }}
-          initialValue={editingRule ? {
-            ruleType: editingRule.type,
-            sourceScopeType: editingRule.scopeType === 'intra' ? 'intra_scope' : 'extra_scope',
-            sources: [],
-            sourceClusters: [],
-            sourceProcessServices: [],
-            destinations: [],
-            destinationClusters: [],
-            destinationServices: [],
-            ruleOptions: [],
-          } : undefined}
-          environment={policy.environment}
-          />
-        </div>
-      )}
 
       {provisionDialogOpen && (
         <ProvisionDialog
