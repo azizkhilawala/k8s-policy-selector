@@ -2,6 +2,7 @@ import {useState} from 'react';
 import {Button} from '@astryxdesign/core/Button';
 import {Text} from '@astryxdesign/core/Text';
 import {Selector} from '@astryxdesign/core/Selector';
+import {TabList, Tab} from '@astryxdesign/core/TabList';
 import {AddRulePanel} from './components/PolicySelector';
 import type {RuleFormValue} from './components/PolicySelector';
 import {usePolicyStore} from './stores/policyStore';
@@ -42,16 +43,10 @@ export default function App() {
       }}>
         <Text size="lg" weight="bold">MetaAstryx</Text>
         <div style={{width: '1px', height: 'var(--spacing-6)', backgroundColor: 'var(--color-border)'}} />
-        <Button
-          label="Containers Policy"
-          variant="tertiary"
-          onClick={() => setView('demo')}
-        />
-        <Button
-          label="Policies"
-          variant="tertiary"
-          onClick={() => setView('policies')}
-        />
+        <TabList value={view === 'editor' ? 'policies' : view} onChange={v => setView(v as View)} size="sm">
+          <Tab value="demo" label="Containers Policy" />
+          <Tab value="policies" label="Policies" />
+        </TabList>
         <div style={{flex: 1}} />
         <div style={{flex: '0 0 auto', minWidth: 'var(--spacing-40)'}}>
           <Selector

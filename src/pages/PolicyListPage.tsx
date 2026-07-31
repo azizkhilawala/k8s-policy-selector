@@ -3,6 +3,7 @@ import {Text} from '@astryxdesign/core/Text';
 import {Button} from '@astryxdesign/core/Button';
 import {Badge} from '@astryxdesign/core/Badge';
 import {Token} from '@astryxdesign/core/Token';
+import {TabList, Tab} from '@astryxdesign/core/TabList';
 import {Table, proportional, pixel} from '@astryxdesign/core/Table';
 import type {TableColumn} from '@astryxdesign/core/Table';
 import type {Policy, PolicyStatus, Persona, EnforcementMode} from '../components/Policy/types';
@@ -41,7 +42,7 @@ function getScopeLabels(scope: SelectorValue[]): string[] {
   });
 }
 
-type Tab = 'organization' | 'application';
+type PolicyTab = 'organization' | 'application';
 
 // Row shape for the Table data prop
 type PolicyRow = Record<string, unknown> & {
@@ -57,7 +58,7 @@ interface PolicyListPageProps {
 }
 
 export default function PolicyListPage({store, persona, onCreatePolicy, onEditPolicy}: PolicyListPageProps) {
-  const [activeTab, setActiveTab] = useState<Tab>('organization');
+  const [activeTab, setActiveTab] = useState<PolicyTab>('organization');
 
   const orgPolicies = store.policies.filter(p => p.type === 'organization');
   const appPolicies = store.policies.filter(p => p.type === 'application');
@@ -216,23 +217,11 @@ export default function PolicyListPage({store, persona, onCreatePolicy, onEditPo
       </div>
 
       {/* Tabs */}
-      <div style={{display: 'flex', gap: 'var(--spacing-1)', padding: '0 var(--spacing-6)', borderBottom: '1px solid var(--color-border)'}}>
-        {(['organization', 'application'] as Tab[]).map(tab => (
-          <div
-            key={tab}
-            style={{
-              borderBottom: activeTab === tab ? '2px solid var(--color-border-active)' : '2px solid transparent',
-              padding: 'var(--spacing-1) 0',
-            }}
-          >
-            <Button
-              label={tab === 'organization' ? 'Organization Policies' : 'Application Policies'}
-              variant="tertiary"
-              size="sm"
-              onClick={() => setActiveTab(tab)}
-            />
-          </div>
-        ))}
+      <div style={{padding: '0 var(--spacing-6)'}}>
+        <TabList value={activeTab} onChange={v => setActiveTab(v as PolicyTab)} size="sm" hasDivider>
+          <Tab value="organization" label="Organization Policies" />
+          <Tab value="application" label="Application Policies" />
+        </TabList>
       </div>
 
       {/* Table */}
