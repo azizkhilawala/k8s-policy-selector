@@ -206,22 +206,25 @@ export default function PolicyListPage({store, persona, onCreatePolicy, onEditPo
 
   return (
     <div style={{display: 'flex', flexDirection: 'column', height: '100%'}}>
-      {/* Page header */}
+      {/* Action toolbar */}
       <div style={{
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: 'var(--spacing-4) var(--spacing-6)',
-        borderBottom: '1px solid var(--color-border)',
+        padding: 'var(--spacing-3) var(--spacing-5)',
       }}>
-        <Text size="xl" weight="bold">Policies</Text>
-        {!isOrgTabReadOnly && (
-          <Button label="+ Create Policy" variant="primary" onClick={onCreatePolicy} />
-        )}
+        <div style={{display: 'flex', alignItems: 'center', gap: 'var(--spacing-2)'}}>
+          {!isOrgTabReadOnly && (
+            <Button label="+ Add" variant="primary" size="sm" onClick={onCreatePolicy} />
+          )}
+          <Button label="Provision" variant="secondary" size="sm" onClick={() => {}} />
+          <Button label="Revert" variant="secondary" size="sm" onClick={() => {}} />
+        </div>
+        <Button label="Export" variant="secondary" size="sm" onClick={() => {}} />
       </div>
 
       {/* Tabs */}
-      <div style={{padding: '0 var(--spacing-6)'}}>
+      <div style={{padding: '0 var(--spacing-5)'}}>
         <TabList value={activeTab} onChange={v => setActiveTab(v as PolicyTab)} size="sm" hasDivider>
           <Tab value="organization" label="Organization Policies" />
           <Tab value="application" label="Application Policies" />

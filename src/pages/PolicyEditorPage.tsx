@@ -136,7 +136,7 @@ export default function PolicyEditorPage({policyId, onBack, store}: Props) {
   };
 
   return (
-    <div style={{display: 'flex', height: '100vh', overflow: 'hidden', position: 'relative'}}>
+    <div style={{display: 'flex', height: '100%', overflow: 'hidden', position: 'relative'}}>
       <div style={{flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden'}}>
         {/* Back nav */}
         <div
