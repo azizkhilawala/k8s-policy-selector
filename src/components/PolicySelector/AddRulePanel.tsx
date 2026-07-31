@@ -66,7 +66,7 @@ export default function AddRulePanel({onSave, onCancel, initialValue, environmen
       display: 'flex',
       flexDirection: 'column',
       width: '776px',
-      height: '100vh',
+      height: '100%',
       backgroundColor: 'var(--color-background-surface)',
       borderLeft: '1px solid var(--color-border)',
     }}>

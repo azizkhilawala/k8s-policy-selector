@@ -191,7 +191,7 @@ export default function PolicyEditorPage({policyId, onBack, store}: Props) {
       </div>
 
       {addRulePanelOpen && (
-        <div style={{display: 'flex', flexDirection: 'column'}}>
+        <div style={{position: 'fixed', right: 0, top: 0, bottom: 0, display: 'flex', flexDirection: 'column', zIndex: 800}}>
           {editingRule && (
             <Banner
               status="info"
