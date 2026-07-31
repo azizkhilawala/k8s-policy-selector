@@ -26,7 +26,7 @@ export default function RulesToolbar({onAddRule, search, onSearchChange, typeFil
       borderBottom: '1px solid var(--color-border)',
     }}>
       <Button label="+ Add Rule" variant="primary" size="sm" onClick={onAddRule} />
-      <div style={{width: '200px'}}>
+      <div style={{flex: '0 0 auto'}}>
         <MultiSelector
           label="Filter by type"
           value={typeFilter}
@@ -36,7 +36,7 @@ export default function RulesToolbar({onAddRule, search, onSearchChange, typeFil
           hasClear
         />
       </div>
-      <div style={{flex: 1, maxWidth: '300px'}}>
+      <div style={{flex: 1}}>
         <TextInput
           label="Search rules"
           value={search}

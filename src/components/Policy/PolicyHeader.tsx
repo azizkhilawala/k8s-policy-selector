@@ -20,6 +20,7 @@ interface PolicyHeaderProps {
   onNameChange: (name: string) => void;
   onTypeChange: (type: PolicyType) => void;
   onEnforcementModeChange: (mode: EnforcementMode) => void;
+  onSave: () => void;
   isNew?: boolean;
 }
 
@@ -28,6 +29,7 @@ export default function PolicyHeader({
   onNameChange,
   onTypeChange,
   onEnforcementModeChange,
+  onSave,
   isNew = false,
 }: PolicyHeaderProps) {
   const [nameError, setNameError] = useState<string | undefined>();
@@ -84,6 +86,7 @@ export default function PolicyHeader({
         label="Save Changes"
         variant="primary"
         isDisabled={policy.name.trim() === ''}
+        onClick={onSave}
       />
     </div>
   );

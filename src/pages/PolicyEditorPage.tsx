@@ -162,6 +162,7 @@ export default function PolicyEditorPage({policyId, onBack, store}: Props) {
           onNameChange={name => setLocalPolicy(p => ({...p, name}))}
           onTypeChange={type => setLocalPolicy(p => ({...p, type: type as PolicyType}))}
           onEnforcementModeChange={mode => setLocalPolicy(p => ({...p, enforcementMode: mode as EnforcementMode}))}
+          onSave={handleSavePolicy}
           isNew={isNew && !activePolicyId}
         />
 
@@ -190,9 +191,16 @@ export default function PolicyEditorPage({policyId, onBack, store}: Props) {
       </div>
 
       {addRulePanelOpen && (
-        <AddRulePanel
-          onSave={handleAddRule}
-          onCancel={() => { setAddRulePanelOpen(false); setEditingRule(null); }}
+        <div style={{display: 'flex', flexDirection: 'column'}}>
+          {editingRule && (
+            <Banner
+              status="info"
+              title="Sources and destinations must be reselected when editing a rule."
+            />
+          )}
+          <AddRulePanel
+            onSave={handleAddRule}
+            onCancel={() => { setAddRulePanelOpen(false); setEditingRule(null); }}
           initialValue={editingRule ? {
             ruleType: editingRule.type,
             sourceScopeType: editingRule.scopeType === 'intra' ? 'intra_scope' : 'extra_scope',
@@ -205,7 +213,8 @@ export default function PolicyEditorPage({policyId, onBack, store}: Props) {
             ruleOptions: [],
           } : undefined}
           environment={policy.environment}
-        />
+          />
+        </div>
       )}
 
       {provisionDialogOpen && (

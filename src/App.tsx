@@ -41,7 +41,7 @@ export default function App() {
         backgroundColor: 'var(--color-background-surface)',
       }}>
         <Text size="lg" weight="bold">MetaAstryx</Text>
-        <div style={{width: '1px', height: '24px', backgroundColor: 'var(--color-border)'}} />
+        <div style={{width: '1px', height: 'var(--spacing-6)', backgroundColor: 'var(--color-border)'}} />
         <Button
           label="Containers Policy"
           variant="tertiary"
@@ -53,7 +53,7 @@ export default function App() {
           onClick={() => setView('policies')}
         />
         <div style={{flex: 1}} />
-        <div style={{width: '200px'}}>
+        <div style={{flex: '0 0 auto', minWidth: 'var(--spacing-40)'}}>
           <Selector
             label="Persona"
             value={persona}

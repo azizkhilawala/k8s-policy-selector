@@ -21,7 +21,7 @@ export default function ImpactPanel({policyName, onClose, onConfirmAndProvision}
       right: 0,
       top: 0,
       bottom: 0,
-      width: '520px',
+      width: '35vw',
       backgroundColor: 'var(--color-background-surface)',
       borderLeft: '1px solid var(--color-border)',
       display: 'flex',

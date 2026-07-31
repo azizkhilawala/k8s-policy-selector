@@ -55,7 +55,7 @@ export default function RuleRow({rule, onEdit, onDelete, onToggleEnabled}: Props
   return (
     <div style={{
       display: 'grid',
-      gridTemplateColumns: '120px 100px 1fr 1fr 140px 80px 80px 100px',
+      gridTemplateColumns: '1fr 0.8fr 1.5fr 1.5fr 1.2fr 0.6fr 0.6fr 0.8fr',
       gap: 'var(--spacing-3)',
       alignItems: 'center',
       padding: 'var(--spacing-3) var(--spacing-4)',

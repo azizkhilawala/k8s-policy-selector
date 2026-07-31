@@ -30,7 +30,7 @@ export default function RulesTable({rules, onEdit, onDelete, onToggleEnabled}: R
       {/* Header row */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: '120px 100px 1fr 1fr 140px 80px 80px 100px',
+        gridTemplateColumns: '1fr 0.8fr 1.5fr 1.5fr 1.2fr 0.6fr 0.6fr 0.8fr',
         gap: 'var(--spacing-3)',
         padding: 'var(--spacing-2) var(--spacing-4)',
         borderBottom: '2px solid var(--color-border)',

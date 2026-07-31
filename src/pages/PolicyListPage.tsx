@@ -21,19 +21,24 @@ interface PolicyRowProps {
   onEdit: () => void;
   onDelete: () => void;
   showActions: boolean;
+  isReadOnly: boolean;
 }
 
-function PolicyRow({policy, onEdit, onDelete, showActions}: PolicyRowProps) {
+function PolicyRow({policy, onEdit, onDelete, showActions, isReadOnly}: PolicyRowProps) {
   return (
     <div style={{
       display: 'grid',
-      gridTemplateColumns: '2fr 80px 100px 160px 120px',
+      gridTemplateColumns: '2fr 0.5fr 0.8fr 1.2fr 0.8fr',
       gap: 'var(--spacing-3)',
       alignItems: 'center',
       padding: 'var(--spacing-3) var(--spacing-4)',
       borderBottom: '1px solid var(--color-border)',
     }}>
-      <Button label={policy.name} variant="tertiary" onClick={onEdit} />
+      {isReadOnly ? (
+        <Text size="sm">{policy.name}</Text>
+      ) : (
+        <Button label={policy.name} variant="tertiary" onClick={onEdit} />
+      )}
       <Text size="sm">{policy.rules.length}</Text>
       <Badge label={policy.status} variant={statusVariant(policy.status)} />
       <Text size="sm" color="secondary">{formatDate(policy.lastModified)}</Text>
@@ -114,7 +119,7 @@ export default function PolicyListPage({store, persona, onCreatePolicy, onEditPo
         {/* Header row */}
         <div style={{
           display: 'grid',
-          gridTemplateColumns: '2fr 80px 100px 160px 120px',
+          gridTemplateColumns: '2fr 0.5fr 0.8fr 1.2fr 0.8fr',
           gap: 'var(--spacing-3)',
           padding: 'var(--spacing-2) var(--spacing-4)',
           borderBottom: '2px solid var(--color-border)',
@@ -140,6 +145,7 @@ export default function PolicyListPage({store, persona, onCreatePolicy, onEditPo
               onEdit={() => onEditPolicy(policy.id)}
               onDelete={() => store.deletePolicy(policy.id)}
               showActions={!isOrgTabReadOnly}
+              isReadOnly={isOrgTabReadOnly}
             />
           ))
         )}
