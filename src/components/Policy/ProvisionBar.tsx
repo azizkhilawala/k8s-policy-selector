@@ -24,7 +24,7 @@ export default function ProvisionBar({draftCount, onShowImpact, onProvision}: Pr
       <Text size="sm">unpublished {draftCount === 1 ? 'change' : 'changes'}</Text>
       <div style={{flex: 1}} />
       <Button label="Show Impact" variant="secondary" size="sm" onClick={onShowImpact} />
-      <Button label="Provision" variant="primary" size="sm" onClick={onProvision} />
+      <Button label="Provision ▸" variant="primary" size="sm" onClick={onProvision} />
     </div>
   );
 }
