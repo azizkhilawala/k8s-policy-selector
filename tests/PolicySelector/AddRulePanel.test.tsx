@@ -1,5 +1,6 @@
 import {render, screen, fireEvent} from '@testing-library/react';
 import {AddRulePanel} from '../../src/components/PolicySelector';
+import type {RuleFormValue} from '../../src/components/PolicySelector/types';
 
 describe('AddRulePanel', () => {
   it('renders all required fields', () => {
@@ -27,5 +28,28 @@ describe('AddRulePanel', () => {
     expect(onSave).toHaveBeenCalledWith(
       expect.objectContaining({ruleType: 'allow', sourceScopeType: 'intra_scope'}),
     );
+  });
+
+  it('renders "Edit Rule" header when initialValue provided', () => {
+    const initial: RuleFormValue = {
+      ruleType: 'deny',
+      sourceScopeType: 'extra_scope',
+      sources: [],
+      sourceClusters: [],
+      sourceProcessServices: [],
+      destinations: [],
+      destinationClusters: [],
+      destinationServices: [],
+      ruleOptions: [],
+    };
+    render(<AddRulePanel onSave={vi.fn()} onCancel={vi.fn()} initialValue={initial} />);
+    expect(screen.getByText('Edit Rule')).toBeInTheDocument();
+    expect(screen.getByText('Update Rule')).toBeInTheDocument();
+  });
+
+  it('hides Deny/Override Deny for app_owner persona', () => {
+    render(<AddRulePanel onSave={vi.fn()} onCancel={vi.fn()} persona="app_owner" />);
+    expect(screen.queryByText('Deny Rule')).not.toBeInTheDocument();
+    expect(screen.queryByText('Override Deny Rule')).not.toBeInTheDocument();
   });
 });

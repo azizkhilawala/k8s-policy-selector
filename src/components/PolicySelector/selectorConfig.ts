@@ -4,6 +4,12 @@ import CloudResourceEditor, {cloudResourceGetString} from './CloudResourceEditor
 import K8sNamespaceEditor, {namespaceGetString} from './K8sNamespaceEditor';
 import PortRangeEditor, {portRangeGetString} from './PortRangeEditor';
 import type {SelectorSide} from './types';
+import type {Environment} from '../Policy/types';
+
+// PCE environment: only these categories
+const PCE_CATEGORIES = new Set(['illumio_labels', 'ip_list', 'fqdn']);
+// CloudSecure environment: exclude illumio_labels
+const CLOUDSECURE_EXCLUDED = new Set(['illumio_labels']);
 
 function makeCloudEditor(category: Parameters<typeof cloudResourceGetString>[1]) {
   return {
@@ -105,7 +111,7 @@ const ILLUMIO_LABEL_SUGGESTIONS = [
   'Loc:us-east-1', 'Loc:us-west-2', 'Loc:eu-west-1', 'Loc:ap-southeast-1', 'Loc:datacenter-nyc', 'Loc:datacenter-london',
 ];
 
-export function buildSelectorConfig(side: SelectorSide): PowerSearchConfig {
+function buildAllFields(side: SelectorSide): PowerSearchConfig {
   const isDestination = side === 'destination';
 
   const fields: Array<PowerSearchConfig['fields'][number]> = [
@@ -350,6 +356,17 @@ export function buildSelectorConfig(side: SelectorSide): PowerSearchConfig {
   }
 
   return {name: `${side}-selector`, fields};
+}
+
+export function buildSelectorConfig(side: SelectorSide, environment: Environment = 'containers'): PowerSearchConfig {
+  const allFields = buildAllFields(side);
+  if (environment === 'pce') {
+    return {...allFields, fields: allFields.fields.filter(f => PCE_CATEGORIES.has(f.key))};
+  }
+  if (environment === 'cloudsecure') {
+    return {...allFields, fields: allFields.fields.filter(f => !CLOUDSECURE_EXCLUDED.has(f.key))};
+  }
+  return allFields; // containers = all
 }
 
 export function buildPortRangeConfig(): PowerSearchConfig {

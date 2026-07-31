@@ -8,8 +8,9 @@ import SelectorPowerSearch from './SelectorPowerSearch';
 import RuleOptionsSelector from './RuleOptionsSelector';
 import {buildPortRangeConfig} from './selectorConfig';
 import type {RuleFormValue, RuleOption} from './types';
+import type {Persona, Environment} from '../Policy/types';
 
-const RULE_TYPE_OPTIONS = [
+const ALL_RULE_TYPE_OPTIONS = [
   {value: 'allow', label: 'Allow Rule'},
   {value: 'deny', label: 'Deny Rule'},
   {value: 'override_deny', label: 'Override Deny Rule'},
@@ -23,16 +24,25 @@ const SCOPE_TYPE_OPTIONS = [
 interface Props {
   onSave: (value: RuleFormValue) => void;
   onCancel: () => void;
+  initialValue?: RuleFormValue;
+  environment?: Environment;
+  persona?: Persona;
 }
 
-export default function AddRulePanel({onSave, onCancel}: Props) {
-  const [ruleType, setRuleType] = useState<RuleFormValue['ruleType']>('allow');
-  const [sourceScopeType, setSourceScopeType] = useState<RuleFormValue['sourceScopeType']>('intra_scope');
+export default function AddRulePanel({onSave, onCancel, initialValue, environment = 'containers', persona = 'admin'}: Props) {
+  const isEditMode = initialValue != null;
+
+  const [ruleType, setRuleType] = useState<RuleFormValue['ruleType']>(initialValue?.ruleType ?? 'allow');
+  const [sourceScopeType, setSourceScopeType] = useState<RuleFormValue['sourceScopeType']>(initialValue?.sourceScopeType ?? 'intra_scope');
   const [sourceFilters, setSourceFilters] = useState<ReadonlyArray<PowerSearchFilter>>([]);
   const [sourceProcessFilters, setSourceProcessFilters] = useState<ReadonlyArray<PowerSearchFilter>>([]);
   const [destinationFilters, setDestinationFilters] = useState<ReadonlyArray<PowerSearchFilter>>([]);
   const [portRangeFilters, setPortRangeFilters] = useState<ReadonlyArray<PowerSearchFilter>>([]);
-  const [ruleOptions, setRuleOptions] = useState<RuleOption[]>([]);
+  const [ruleOptions, setRuleOptions] = useState<RuleOption[]>(initialValue?.ruleOptions ?? []);
+
+  const ruleTypeOptions = persona === 'app_owner'
+    ? ALL_RULE_TYPE_OPTIONS.filter(o => o.value === 'allow')
+    : ALL_RULE_TYPE_OPTIONS;
 
   const sourceProcessConfig = useMemo(() => buildPortRangeConfig(), []);
   const portRangeConfig = useMemo(() => buildPortRangeConfig(), []);
@@ -62,7 +72,7 @@ export default function AddRulePanel({onSave, onCancel}: Props) {
     }}>
       {/* Header */}
       <div style={{padding: 'var(--spacing-4)', borderBottom: '1px solid var(--color-border)'}}>
-        <Text weight="bold" size="lg">Add Rule</Text>
+        <Text weight="bold" size="lg">{isEditMode ? 'Edit Rule' : 'Add Rule'}</Text>
       </div>
 
       {/* Body */}
@@ -71,7 +81,7 @@ export default function AddRulePanel({onSave, onCancel}: Props) {
         <Selector
           label="Rule Type"
           value={ruleType}
-          options={RULE_TYPE_OPTIONS}
+          options={ruleTypeOptions}
           onChange={v => setRuleType(v as RuleFormValue['ruleType'])}
           isRequired
         />
@@ -90,6 +100,7 @@ export default function AddRulePanel({onSave, onCancel}: Props) {
           filters={sourceFilters}
           onFiltersChange={setSourceFilters}
           isRequired
+          environment={environment}
         />
 
         <div style={{display: 'flex', flexDirection: 'column', gap: 'var(--spacing-1)'}}>
@@ -109,6 +120,7 @@ export default function AddRulePanel({onSave, onCancel}: Props) {
           filters={destinationFilters}
           onFiltersChange={setDestinationFilters}
           isRequired
+          environment={environment}
         />
 
         <div style={{display: 'flex', flexDirection: 'column', gap: 'var(--spacing-1)'}}>
@@ -138,7 +150,7 @@ export default function AddRulePanel({onSave, onCancel}: Props) {
         gap: 'var(--spacing-2)',
       }}>
         <Button label="Cancel" variant="secondary" onClick={onCancel} />
-        <Button label="Save" variant="primary" onClick={handleSave} />
+        <Button label={isEditMode ? 'Update Rule' : 'Save'} variant="primary" onClick={handleSave} />
       </div>
     </div>
   );

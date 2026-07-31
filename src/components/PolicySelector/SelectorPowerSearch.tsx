@@ -7,6 +7,7 @@ import {Text} from '@astryxdesign/core/Text';
 import {buildSelectorConfig} from './selectorConfig';
 import {getConflictingCategories, getConflictWarning} from './mutualExclusion';
 import type {SelectorSide, SelectorCategory} from './types';
+import type {Environment} from '../Policy/types';
 
 // Wraps the default editor so the value input stacks below the field+operator row
 function VerticalEditor(props: PowerSearchEditorProps) {
@@ -26,12 +27,13 @@ interface Props {
   onFiltersChange: (filters: ReadonlyArray<PowerSearchFilter>) => void;
   isRequired?: boolean;
   isDisabled?: boolean;
+  environment?: Environment;
 }
 
 export default function SelectorPowerSearch({
-  label, side, filters, onFiltersChange, isRequired, isDisabled,
+  label, side, filters, onFiltersChange, isRequired, isDisabled, environment,
 }: Props) {
-  const config = useMemo(() => buildSelectorConfig(side), [side]);
+  const config = useMemo(() => buildSelectorConfig(side, environment), [side, environment]);
   const [pendingFilters, setPendingFilters] = useState<ReadonlyArray<PowerSearchFilter> | null>(null);
   const [conflictWarning, setConflictWarning] = useState<string | null>(null);
   const [conflictKeys, setConflictKeys] = useState<string[]>([]);
