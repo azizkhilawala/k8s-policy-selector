@@ -191,7 +191,7 @@ export default function RulesTable({rules, onEdit, onDelete, onToggleEnabled}: R
       header: '',
       width: pixel(50),
       renderCell: (item: RuleRow) => (
-        <DropdownMenu button={{label: '⋮', variant: 'ghost', size: 'sm'}} placement="start">
+        <DropdownMenu button={{label: '⋮', variant: 'ghost', size: 'sm'}} hasChevron={false}>
           <DropdownMenuItem label="Edit" onClick={() => onEdit(item as unknown as Rule)} />
           <DropdownMenuItem label="Delete" onClick={() => onDelete(item.id)} />
         </DropdownMenu>

@@ -125,7 +125,7 @@ export default function PolicyListPage({store, persona, onCreatePolicy, onEditPo
       const policy = row._policy as Policy;
       if (isOrgTabReadOnly) return <div />;
       return (
-        <DropdownMenu button={{label: '⋮', variant: 'ghost', size: 'sm'}} placement="start">
+        <DropdownMenu button={{label: '⋮', variant: 'ghost', size: 'sm'}} hasChevron={false}>
           <DropdownMenuItem label="Edit" onClick={() => onEditPolicy(policy.id)} />
           <DropdownMenuItem label="Delete" onClick={() => store.deletePolicy(policy.id)} />
         </DropdownMenu>
