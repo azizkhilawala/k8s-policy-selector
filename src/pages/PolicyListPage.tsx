@@ -1,8 +1,10 @@
-import {useState} from 'react';
+import {useState, useMemo} from 'react';
 import {Text} from '@astryxdesign/core/Text';
 import {Button} from '@astryxdesign/core/Button';
 import {Badge} from '@astryxdesign/core/Badge';
 import {Token} from '@astryxdesign/core/Token';
+import {Table, proportional, pixel} from '@astryxdesign/core/Table';
+import type {TableColumn} from '@astryxdesign/core/Table';
 import type {Policy, PolicyStatus, Persona, EnforcementMode} from '../components/Policy/types';
 import type {SelectorValue} from '../components/PolicySelector/types';
 import type {usePolicyStore} from '../stores/policyStore';
@@ -41,59 +43,11 @@ function getScopeLabels(scope: SelectorValue[]): string[] {
 
 type Tab = 'organization' | 'application';
 
-interface PolicyRowProps {
-  policy: Policy;
-  tab: Tab;
-  onEdit: () => void;
-  onDelete: () => void;
-  showActions: boolean;
-  isReadOnly: boolean;
-}
-
-function PolicyRow({policy, tab, onEdit, onDelete, showActions, isReadOnly}: PolicyRowProps) {
-  const scopeLabels = getScopeLabels(policy.scope);
-
-  return (
-    <div style={{
-      display: 'grid',
-      gridTemplateColumns: tab === 'organization'
-        ? '2fr 1fr 0.5fr 0.8fr 1.2fr 0.8fr'
-        : '2fr 1.5fr 0.5fr 0.8fr 1.2fr 0.8fr',
-      gap: 'var(--spacing-3)',
-      alignItems: 'center',
-      padding: 'var(--spacing-3) var(--spacing-4)',
-      borderBottom: '1px solid var(--color-border)',
-    }}>
-      {isReadOnly ? (
-        <Text size="sm">{policy.name}</Text>
-      ) : (
-        <Button label={policy.name} variant="tertiary" onClick={onEdit} />
-      )}
-      {tab === 'organization' ? (
-        <Badge label={enforcementLabel(policy.enforcementMode)} variant={enforcementVariant(policy.enforcementMode)} />
-      ) : (
-        <div style={{display: 'flex', gap: 'var(--spacing-1)', flexWrap: 'wrap'}}>
-          {scopeLabels.length > 0
-            ? scopeLabels.slice(0, 3).map((label, i) => <Token key={i} label={label} />)
-            : <Text size="sm" color="secondary">No scope</Text>
-          }
-          {scopeLabels.length > 3 && <Text size="sm" color="secondary">+{scopeLabels.length - 3}</Text>}
-        </div>
-      )}
-      <Text size="sm">{policy.rules.length}</Text>
-      <Badge label={policy.status} variant={statusVariant(policy.status)} />
-      <Text size="sm" color="secondary">{formatDate(policy.lastModified)}</Text>
-      {showActions ? (
-        <div style={{display: 'flex', gap: 'var(--spacing-1)'}}>
-          <Button label="Edit" variant="tertiary" size="sm" onClick={onEdit} />
-          <Button label="Delete" variant="tertiary" size="sm" onClick={onDelete} />
-        </div>
-      ) : (
-        <div />
-      )}
-    </div>
-  );
-}
+// Row shape for the Table data prop
+type PolicyRow = Record<string, unknown> & {
+  id: string;
+  _policy: Policy;
+};
 
 interface PolicyListPageProps {
   store: ReturnType<typeof usePolicyStore>;
@@ -110,9 +64,140 @@ export default function PolicyListPage({store, persona, onCreatePolicy, onEditPo
   const displayed = activeTab === 'organization' ? orgPolicies : appPolicies;
   const isOrgTabReadOnly = activeTab === 'organization' && persona === 'app_owner';
 
-  const ORG_HEADERS = ['Name', 'Enforcement Mode', 'Rules', 'Status', 'Last Modified', 'Actions'];
-  const APP_HEADERS = ['Name', 'Scope', 'Rules', 'Status', 'Last Modified', 'Actions'];
-  const headers = activeTab === 'organization' ? ORG_HEADERS : APP_HEADERS;
+  // Convert Policy[] to Record<string, unknown>[] with _policy reference
+  const tableData: PolicyRow[] = useMemo(
+    () => displayed.map(p => ({id: p.id, _policy: p} as PolicyRow)),
+    [displayed],
+  );
+
+  // Shared columns for both tabs
+  const nameColumn: TableColumn<PolicyRow> = {
+    key: 'name',
+    header: 'Name',
+    width: proportional(2),
+    renderCell: (row) => {
+      const policy = row._policy as Policy;
+      return isOrgTabReadOnly ? (
+        <Text size="sm">{policy.name}</Text>
+      ) : (
+        <Button label={policy.name} variant="tertiary" onClick={() => onEditPolicy(policy.id)} />
+      );
+    },
+  };
+
+  const rulesColumn: TableColumn<PolicyRow> = {
+    key: 'rules',
+    header: 'Rules',
+    width: proportional(0.5),
+    renderCell: (row) => {
+      const policy = row._policy as Policy;
+      return <Text size="sm">{policy.rules.length}</Text>;
+    },
+  };
+
+  const statusColumn: TableColumn<PolicyRow> = {
+    key: 'status',
+    header: 'Status',
+    width: proportional(0.8),
+    renderCell: (row) => {
+      const policy = row._policy as Policy;
+      return <Badge label={policy.status} variant={statusVariant(policy.status)} />;
+    },
+  };
+
+  const lastModifiedColumn: TableColumn<PolicyRow> = {
+    key: 'lastModified',
+    header: 'Last Modified',
+    width: proportional(1.2),
+    renderCell: (row) => {
+      const policy = row._policy as Policy;
+      return <Text size="sm" color="secondary">{formatDate(policy.lastModified)}</Text>;
+    },
+  };
+
+  const actionsColumn: TableColumn<PolicyRow> = {
+    key: 'actions',
+    header: 'Actions',
+    width: pixel(120),
+    renderCell: (row) => {
+      const policy = row._policy as Policy;
+      if (isOrgTabReadOnly) return <div />;
+      return (
+        <div style={{display: 'flex', gap: 'var(--spacing-1)'}}>
+          <Button label="Edit" variant="tertiary" size="sm" onClick={() => onEditPolicy(policy.id)} />
+          <Button label="Delete" variant="tertiary" size="sm" onClick={() => store.deletePolicy(policy.id)} />
+        </div>
+      );
+    },
+  };
+
+  const orgColumns: TableColumn<PolicyRow>[] = [
+    nameColumn,
+    {
+      key: 'enforcementMode',
+      header: 'Enforcement Mode',
+      width: proportional(1),
+      renderCell: (row) => {
+        const policy = row._policy as Policy;
+        return (
+          <Badge
+            label={enforcementLabel(policy.enforcementMode)}
+            variant={enforcementVariant(policy.enforcementMode)}
+          />
+        );
+      },
+    },
+    rulesColumn,
+    statusColumn,
+    lastModifiedColumn,
+    actionsColumn,
+  ];
+
+  const appColumns: TableColumn<PolicyRow>[] = [
+    nameColumn,
+    {
+      key: 'scope',
+      header: 'Scope',
+      width: proportional(1.5),
+      renderCell: (row) => {
+        const policy = row._policy as Policy;
+        const scopeLabels = getScopeLabels(policy.scope);
+        return (
+          <div style={{display: 'flex', gap: 'var(--spacing-1)', flexWrap: 'wrap'}}>
+            {scopeLabels.length > 0
+              ? scopeLabels.slice(0, 3).map((label, i) => <Token key={i} label={label} />)
+              : <Text size="sm" color="secondary">No scope</Text>
+            }
+            {scopeLabels.length > 3 && (
+              <Text size="sm" color="secondary">+{scopeLabels.length - 3}</Text>
+            )}
+          </div>
+        );
+      },
+    },
+    rulesColumn,
+    statusColumn,
+    lastModifiedColumn,
+    actionsColumn,
+  ];
+
+  const columns = activeTab === 'organization' ? orgColumns : appColumns;
+
+  const emptyState = (
+    <div style={{
+      padding: 'var(--spacing-12)',
+      textAlign: 'center',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      gap: 'var(--spacing-4)',
+    }}>
+      <Text color="secondary">No {activeTab} policies yet.</Text>
+      {!isOrgTabReadOnly && (
+        <Button label="+ Create Policy" variant="primary" onClick={onCreatePolicy} />
+      )}
+    </div>
+  );
 
   return (
     <div style={{display: 'flex', flexDirection: 'column', height: '100%'}}>
@@ -152,42 +237,15 @@ export default function PolicyListPage({store, persona, onCreatePolicy, onEditPo
 
       {/* Table */}
       <div style={{flex: 1, overflowY: 'auto'}}>
-        {/* Header row */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: activeTab === 'organization'
-            ? '2fr 1fr 0.5fr 0.8fr 1.2fr 0.8fr'
-            : '2fr 1.5fr 0.5fr 0.8fr 1.2fr 0.8fr',
-          gap: 'var(--spacing-3)',
-          padding: 'var(--spacing-2) var(--spacing-4)',
-          borderBottom: '2px solid var(--color-border)',
-          backgroundColor: 'var(--color-background-secondary)',
-        }}>
-          {headers.map(h => (
-            <Text key={h} size="sm" weight="semibold" color="secondary">{h}</Text>
-          ))}
-        </div>
-
-        {displayed.length === 0 ? (
-          <div style={{padding: 'var(--spacing-12)', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'var(--spacing-4)'}}>
-            <Text color="secondary">No {activeTab} policies yet.</Text>
-            {!isOrgTabReadOnly && (
-              <Button label="+ Create Policy" variant="primary" onClick={onCreatePolicy} />
-            )}
-          </div>
-        ) : (
-          displayed.map(policy => (
-            <PolicyRow
-              key={policy.id}
-              policy={policy}
-              tab={activeTab}
-              onEdit={() => onEditPolicy(policy.id)}
-              onDelete={() => store.deletePolicy(policy.id)}
-              showActions={!isOrgTabReadOnly}
-              isReadOnly={isOrgTabReadOnly}
-            />
-          ))
-        )}
+        <Table<PolicyRow>
+          data={tableData}
+          columns={columns}
+          idKey="id"
+          density="balanced"
+          dividers="rows"
+          hasHover
+          emptyState={emptyState}
+        />
       </div>
     </div>
   );
