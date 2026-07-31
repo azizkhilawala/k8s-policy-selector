@@ -120,6 +120,33 @@ export function buildSelectorConfig(side: SelectorSide): PowerSearchConfig {
       }],
     },
     {
+      key: 'illumio_labels',
+      label: 'Illumio Labels',
+      defaultOperator: 'is_any',
+      operators: [{
+        key: 'is_any',
+        label: 'includes',
+        value: makeStringList(ILLUMIO_LABEL_SUGGESTIONS),
+      }],
+    },
+    {
+      key: 'ip_list',
+      label: 'IP List',
+      defaultOperator: 'is_any',
+      operators: [
+        {
+          key: 'is_any',
+          label: 'is any of',
+          value: makeStringList(IP_LIST_SUGGESTIONS),
+        },
+        {
+          key: 'is_not',
+          label: 'excludes',
+          value: makeStringList(IP_LIST_SUGGESTIONS),
+        },
+      ],
+    },
+    {
       key: 'k8s_namespace',
       label: 'K8s Namespace',
       defaultOperator: 'by_name',
@@ -183,23 +210,6 @@ export function buildSelectorConfig(side: SelectorSide): PowerSearchConfig {
       ],
     },
     {
-      key: 'ip_list',
-      label: 'IP List',
-      defaultOperator: 'is_any',
-      operators: [
-        {
-          key: 'is_any',
-          label: 'is any of',
-          value: makeStringList(IP_LIST_SUGGESTIONS),
-        },
-        {
-          key: 'is_not',
-          label: 'excludes',
-          value: makeStringList(IP_LIST_SUGGESTIONS),
-        },
-      ],
-    },
-    {
       key: 'cloud_aws_account',
       label: 'AWS Account',
       defaultOperator: 'is_any',
@@ -256,16 +266,6 @@ export function buildSelectorConfig(side: SelectorSide): PowerSearchConfig {
       label: 'Azure Subnet',
       defaultOperator: 'is',
       operators: [{key: 'is', label: 'is', value: makeCloudEditor('cloud_azure_subnet')}],
-    },
-    {
-      key: 'illumio_labels',
-      label: 'Illumio Labels',
-      defaultOperator: 'is_any',
-      operators: [{
-        key: 'is_any',
-        label: 'includes',
-        value: makeStringList(ILLUMIO_LABEL_SUGGESTIONS),
-      }],
     },
   ];
 
