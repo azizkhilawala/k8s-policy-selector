@@ -4,7 +4,7 @@ import {Button} from '@astryxdesign/core/Button';
 import {Badge} from '@astryxdesign/core/Badge';
 import {Token} from '@astryxdesign/core/Token';
 import {TabList, Tab} from '@astryxdesign/core/TabList';
-import {DropdownMenu, DropdownMenuItem} from '@astryxdesign/core/DropdownMenu';
+import {MoreMenu} from '@astryxdesign/core/MoreMenu';
 import {Table, proportional, pixel} from '@astryxdesign/core/Table';
 import type {TableColumn} from '@astryxdesign/core/Table';
 import type {Policy, PolicyStatus, Persona, EnforcementMode} from '../components/Policy/types';
@@ -125,10 +125,13 @@ export default function PolicyListPage({store, persona, onCreatePolicy, onEditPo
       const policy = row._policy as Policy;
       if (isOrgTabReadOnly) return <div />;
       return (
-        <DropdownMenu button={{label: '⋮', variant: 'ghost', size: 'sm'}} hasChevron={false}>
-          <DropdownMenuItem label="Edit" onClick={() => onEditPolicy(policy.id)} />
-          <DropdownMenuItem label="Delete" onClick={() => store.deletePolicy(policy.id)} />
-        </DropdownMenu>
+        <MoreMenu
+          size="sm"
+          items={[
+            {label: 'Edit', onClick: () => onEditPolicy(policy.id)},
+            {label: 'Delete', onClick: () => store.deletePolicy(policy.id)},
+          ]}
+        />
       );
     },
   };

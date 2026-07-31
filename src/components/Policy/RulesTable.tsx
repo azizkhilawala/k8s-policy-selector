@@ -3,7 +3,7 @@ import {Table, proportional, pixel} from '@astryxdesign/core/Table';
 import type {TableColumn} from '@astryxdesign/core/Table';
 import {Badge} from '@astryxdesign/core/Badge';
 import {Token} from '@astryxdesign/core/Token';
-import {DropdownMenu, DropdownMenuItem} from '@astryxdesign/core/DropdownMenu';
+import {MoreMenu} from '@astryxdesign/core/MoreMenu';
 import {Button} from '@astryxdesign/core/Button';
 import {Text} from '@astryxdesign/core/Text';
 import {RULE_TYPE_ORDER} from '../../stores/policyStore';
@@ -191,10 +191,13 @@ export default function RulesTable({rules, onEdit, onDelete, onToggleEnabled}: R
       header: '',
       width: pixel(50),
       renderCell: (item: RuleRow) => (
-        <DropdownMenu button={{label: '⋮', variant: 'ghost', size: 'sm'}} hasChevron={false}>
-          <DropdownMenuItem label="Edit" onClick={() => onEdit(item as unknown as Rule)} />
-          <DropdownMenuItem label="Delete" onClick={() => onDelete(item.id)} />
-        </DropdownMenu>
+        <MoreMenu
+          size="sm"
+          items={[
+            {label: 'Edit', onClick: () => onEdit(item as unknown as Rule)},
+            {label: 'Delete', onClick: () => onDelete(item.id)},
+          ]}
+        />
       ),
     },
   ], [onEdit, onDelete, onToggleEnabled]);
