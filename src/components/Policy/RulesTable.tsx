@@ -27,17 +27,6 @@ function statusBadgeVariant(status: RuleStatus) {
   return 'warning' as const;
 }
 
-function TokenPills({items, max = 3}: {items: string[]; max?: number}) {
-  const visible = items.slice(0, max);
-  const overflow = items.length - max;
-  return (
-    <div style={{display: 'flex', gap: 'var(--spacing-1)', flexWrap: 'wrap', alignItems: 'center'}}>
-      {visible.map((label, i) => <Token key={i} label={label} />)}
-      {overflow > 0 && <Text size="sm" color="secondary">+{overflow}</Text>}
-    </div>
-  );
-}
-
 function getSelectorLabels(s: SelectorValue): string[] {
   switch (s.category) {
     case 'k8s_labels':
@@ -76,6 +65,17 @@ function getSelectorLabels(s: SelectorValue): string[] {
   }
 }
 
+function TokenPills({items, max = 3}: {items: string[]; max?: number}) {
+  const visible = items.slice(0, max);
+  const overflow = items.length - max;
+  return (
+    <div style={{display: 'flex', gap: 'var(--spacing-1)', flexWrap: 'wrap', alignItems: 'center'}}>
+      {visible.map((label, i) => <Token key={i} label={label} />)}
+      {overflow > 0 && <Text size="sm" color="secondary">+{overflow}</Text>}
+    </div>
+  );
+}
+
 type RuleRow = Rule & Record<string, unknown> & {_index: number};
 
 interface RulesTableProps {
@@ -104,13 +104,19 @@ export default function RulesTable({rules, onEdit, onDelete, onToggleEnabled}: R
       key: 'type',
       header: 'Type',
       width: proportional(0.8),
-      renderCell: (item: RuleRow) => <Badge label={ruleTypeLabel(item.type)} variant={ruleTypeBadgeVariant(item.type)} />,
+      renderCell: (item: RuleRow) => (
+        <Badge label={ruleTypeLabel(item.type)} variant={ruleTypeBadgeVariant(item.type)} />
+      ),
     },
     {
       key: 'scopeType',
       header: 'Scope',
       width: proportional(0.7),
-      renderCell: (item: RuleRow) => <Text size="sm" color="secondary">{item.scopeType === 'intra' ? 'Intra-scope' : 'Extra-scope'}</Text>,
+      renderCell: (item: RuleRow) => (
+        <Text size="sm" color="secondary">
+          {item.scopeType === 'intra' ? 'Intra-scope' : 'Extra-scope'}
+        </Text>
+      ),
     },
     {
       key: 'enabled',
@@ -149,7 +155,9 @@ export default function RulesTable({rules, onEdit, onDelete, onToggleEnabled}: R
       width: proportional(1.2),
       renderCell: (item: RuleRow) => {
         const labels = (item.services as Rule['services']).map(s =>
-          s.fromPort === s.toPort ? `${s.protocol} ${s.fromPort}` : `${s.protocol} ${s.fromPort}-${s.toPort}`,
+          s.fromPort === s.toPort
+            ? `${s.protocol} ${s.fromPort}`
+            : `${s.protocol} ${s.fromPort}-${s.toPort}`,
         );
         return <TokenPills items={labels.length > 0 ? labels : ['Any']} max={2} />;
       },
@@ -173,7 +181,9 @@ export default function RulesTable({rules, onEdit, onDelete, onToggleEnabled}: R
       key: 'status',
       header: 'Status',
       width: pixel(90),
-      renderCell: (item: RuleRow) => <Badge label={item.status as string} variant={statusBadgeVariant(item.status as RuleStatus)} />,
+      renderCell: (item: RuleRow) => (
+        <Badge label={item.status as string} variant={statusBadgeVariant(item.status as RuleStatus)} />
+      ),
     },
     {
       key: 'actions',
