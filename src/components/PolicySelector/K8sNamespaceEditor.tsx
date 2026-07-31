@@ -262,11 +262,8 @@ export default function K8sNamespaceEditor({mode, isDisabled, onChange, value}: 
       {state.labelExpressions.map((expr, i) => (
         <div key={i}>
           {i > 0 && (
-            <div style={{
-              textAlign: 'center', fontSize: '0.75rem', fontWeight: 600,
-              color: 'var(--color-text-secondary)', padding: 'var(--spacing-1) 0',
-            }}>
-              AND
+            <div style={{textAlign: 'center', padding: 'var(--spacing-1) 0'}}>
+              <Text size="sm" weight="semibold" color="secondary">AND</Text>
             </div>
           )}
           <LabelExpressionRow

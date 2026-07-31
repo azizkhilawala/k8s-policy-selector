@@ -2,6 +2,7 @@ import {useState} from 'react';
 import {TextInput} from '@astryxdesign/core/TextInput';
 import {Selector} from '@astryxdesign/core/Selector';
 import {Button} from '@astryxdesign/core/Button';
+import {Text} from '@astryxdesign/core/Text';
 import type {SelectorCategory} from './types';
 
 const AWS_REGIONS = [
@@ -107,7 +108,7 @@ export default function CloudResourceEditor({category, isDisabled, onChange, val
         <div key={i} style={{display: 'flex', flexDirection: 'column', gap: 'var(--spacing-2)'}}>
           {i > 0 && (
             <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
-              <span style={{color: 'var(--color-text-secondary)', fontSize: '0.75rem'}}>{entryLabel} {i + 1}</span>
+              <Text size="sm" color="secondary">{entryLabel} {i + 1}</Text>
               <Button label="Remove" variant="tertiary" onClick={() => removeEntry(i)} isDisabled={isDisabled} />
             </div>
           )}

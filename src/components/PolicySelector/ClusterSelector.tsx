@@ -3,6 +3,7 @@ import {Token} from '@astryxdesign/core/Token';
 import {Button} from '@astryxdesign/core/Button';
 import {Selector} from '@astryxdesign/core/Selector';
 import {TextInput} from '@astryxdesign/core/TextInput';
+import {Text} from '@astryxdesign/core/Text';
 import type {ClusterRef} from './types';
 
 const CLUSTER_TYPE_OPTIONS = [
@@ -56,7 +57,7 @@ export default function ClusterSelector({clusters, onChange, isDisabled}: Props)
   return (
     <div style={{display: 'flex', flexDirection: 'column', gap: 'var(--spacing-2)'}}>
       <div style={{display: 'flex', gap: 'var(--spacing-1)', flexWrap: 'wrap', alignItems: 'center'}}>
-        <span style={{color: 'var(--color-text-secondary)', fontSize: '0.75rem', fontWeight: 500}}>Cluster</span>
+        <Text size="sm" weight="medium" color="secondary">Cluster</Text>
         {clusters.map((ref, i) => (
           <Token
             key={i}
