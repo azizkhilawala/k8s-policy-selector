@@ -123,11 +123,18 @@ export function buildSelectorConfig(side: SelectorSide): PowerSearchConfig {
       key: 'illumio_labels',
       label: 'Illumio Labels',
       defaultOperator: 'is_any',
-      operators: [{
-        key: 'is_any',
-        label: 'includes',
-        value: makeStringList(ILLUMIO_LABEL_SUGGESTIONS),
-      }],
+      operators: [
+        {
+          key: 'is_any',
+          label: 'includes',
+          value: makeStringList(ILLUMIO_LABEL_SUGGESTIONS),
+        },
+        {
+          key: 'is_not',
+          label: 'excludes',
+          value: makeStringList(ILLUMIO_LABEL_SUGGESTIONS),
+        },
+      ],
     },
     {
       key: 'ip_list',
