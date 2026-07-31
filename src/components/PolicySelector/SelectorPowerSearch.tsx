@@ -44,9 +44,9 @@ export default function SelectorPowerSearch({
       return;
     }
     const incoming = newFilters[index];
-    const existingCategories = filters.map(f => f.fieldKey as string);
+    const existingCategories = filters.map(f => f.field as string);
     const conflicts = getConflictingCategories(
-      incoming.fieldKey as SelectorCategory,
+      incoming.field as SelectorCategory,
       existingCategories as SelectorCategory[],
     );
     if (conflicts.length === 0) {
@@ -55,7 +55,7 @@ export default function SelectorPowerSearch({
       setConflictKeys(conflicts as string[]);
       setPendingFilters(newFilters);
       setConflictWarning(getConflictWarning(
-        incoming.fieldKey as SelectorCategory,
+        incoming.field as SelectorCategory,
         conflicts as SelectorCategory[],
       ));
     }
@@ -63,7 +63,7 @@ export default function SelectorPowerSearch({
 
   const confirmConflict = () => {
     if (pendingFilters) {
-      onFiltersChange(pendingFilters.filter(f => !conflictKeys.includes(f.fieldKey as string)));
+      onFiltersChange(pendingFilters.filter(f => !conflictKeys.includes(f.field as string)));
     }
     setPendingFilters(null);
     setConflictWarning(null);

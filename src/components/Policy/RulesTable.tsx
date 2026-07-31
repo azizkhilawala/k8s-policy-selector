@@ -30,21 +30,22 @@ export default function RulesTable({rules, onEdit, onDelete, onToggleEnabled}: R
       {/* Header row */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: '1fr 0.8fr 1.5fr 1.5fr 1.2fr 0.6fr 0.6fr 0.8fr',
+        gridTemplateColumns: '0.3fr 0.8fr 0.7fr 0.5fr 1.5fr 1.5fr 1.2fr 0.6fr 0.6fr 0.8fr',
         gap: 'var(--spacing-3)',
         padding: 'var(--spacing-2) var(--spacing-4)',
         borderBottom: '2px solid var(--color-border)',
         backgroundColor: 'var(--color-background-secondary)',
       }}>
-        {['Type', 'Scope', 'Sources', 'Destinations', 'Services', 'Options', 'Status', 'Actions'].map(h => (
+        {['#', 'Type', 'Scope', 'Enabled', 'Sources', 'Destinations', 'Services', 'Options', 'Status', 'Actions'].map(h => (
           <Text key={h} size="sm" weight="semibold" color="secondary">{h}</Text>
         ))}
       </div>
 
-      {sorted.map(rule => (
+      {sorted.map((rule, i) => (
         <RuleRow
           key={rule.id}
           rule={rule}
+          rowNumber={i + 1}
           onEdit={() => onEdit(rule)}
           onDelete={() => onDelete(rule.id)}
           onToggleEnabled={enabled => onToggleEnabled(rule.id, enabled)}

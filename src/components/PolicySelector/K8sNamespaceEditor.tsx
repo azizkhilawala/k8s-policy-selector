@@ -120,7 +120,7 @@ function LabelExpressionRow({expr, onChange, onRemove, isDisabled, showRemove}: 
         </div>
 
         {/* Operator */}
-        <div style={{flexBasis: '180px'}}>
+        <div style={{flex: '0 0 auto', minWidth: 'var(--spacing-40)'}}>
           <Selector
             label="Operator"
             value={expr.operator}

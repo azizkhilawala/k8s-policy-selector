@@ -92,6 +92,9 @@ export default function PolicyEditorPage({policyId, onBack, store}: Props) {
       store.updateRule(activePolicyId, editingRule.id, {
         type: formValue.ruleType,
         scopeType: formValue.sourceScopeType === 'intra_scope' ? 'intra' : 'extra',
+        sources: formValue.sources,
+        destinations: formValue.destinations,
+        services: formValue.destinationServices,
         options: {
           stateless: formValue.ruleOptions.includes('stateless'),
           secureConnect: formValue.ruleOptions.includes('secure_connect'),
@@ -103,9 +106,9 @@ export default function PolicyEditorPage({policyId, onBack, store}: Props) {
       store.addRule(activePolicyId, {
         type: formValue.ruleType,
         scopeType: formValue.sourceScopeType === 'intra_scope' ? 'intra' : 'extra',
-        sources: [],
-        destinations: [],
-        services: [],
+        sources: formValue.sources,
+        destinations: formValue.destinations,
+        services: formValue.destinationServices,
         options: {
           stateless: formValue.ruleOptions.includes('stateless'),
           secureConnect: formValue.ruleOptions.includes('secure_connect'),
