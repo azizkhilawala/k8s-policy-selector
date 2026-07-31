@@ -47,26 +47,117 @@ export default function App() {
           superheading="CloudSecure"
         />
       }
-      collapsible={{defaultIsCollapsed: true}}
+      collapsible={{defaultIsCollapsed: false}}
     >
-      <SideNavSection title="Main" isHeaderHidden>
-        <SideNavItem label="Dashboard" isSelected={navPage === 'dashboard'} onClick={() => setNavPage('dashboard')} />
-        <SideNavItem label="Insights" isSelected={navPage === 'insights'} onClick={() => setNavPage('insights')} />
+      <SideNavSection title="Navigation" isHeaderHidden>
+        <SideNavItem label="Dashboard" isSelected={navPage === 'dashboard'} onClick={() => setNavPage('dashboard')} collapsible>
+          <SideNavItem label="Servers & Endpoints" onClick={() => setNavPage('servers')} />
+          <SideNavItem label="Cloud" onClick={() => setNavPage('cloud')} />
+          <SideNavItem label="Ransomware Protection" onClick={() => {}} />
+        </SideNavItem>
+
+        <SideNavItem label="Insights" isSelected={navPage === 'insights'} onClick={() => setNavPage('insights')} collapsible>
+          <SideNavItem label="Insights Agent" onClick={() => {}} />
+          <SideNavItem label="Active Persona" onClick={() => {}} />
+          <SideNavItem label="Network Compliance" onClick={() => {}} collapsible>
+            <SideNavItem label="Network Posture" onClick={() => {}} />
+            <SideNavItem label="External Data Transfer" onClick={() => {}} />
+            <SideNavItem label="Shadow LLMs" onClick={() => {}} />
+            <SideNavItem label="DORA Compliance" onClick={() => {}} />
+            <SideNavItem label="Containers" onClick={() => {}} />
+            <SideNavItem label="Label Insights" onClick={() => {}} />
+          </SideNavItem>
+          <SideNavItem label="Network Threats" onClick={() => {}} collapsible>
+            <SideNavItem label="Country Insights" onClick={() => {}} />
+            <SideNavItem label="Firewall Insights" onClick={() => {}} />
+            <SideNavItem label="Risky Traffic" onClick={() => {}} />
+            <SideNavItem label="Malicious IP Threats" onClick={() => {}} />
+            <SideNavItem label="Anomaly Detection" onClick={() => {}} />
+          </SideNavItem>
+          <SideNavItem label="Identity Mapping" onClick={() => {}} collapsible>
+            <SideNavItem label="Identity Graph" onClick={() => {}} />
+            <SideNavItem label="Identity Insights" onClick={() => {}} />
+          </SideNavItem>
+          <SideNavItem label="Perimeter Insight" onClick={() => {}} />
+          <SideNavItem label="Resource Traffic" onClick={() => {}} />
+          <SideNavItem label="Traffic Rules" onClick={() => {}} />
+        </SideNavItem>
+
         <SideNavItem label="Quarantine" isSelected={navPage === 'quarantine'} onClick={() => setNavPage('quarantine')} />
-        <SideNavItem label="Explore" isSelected={navPage === 'explore'} onClick={() => setNavPage('explore')} />
-        <SideNavItem label="Segmentation" isSelected={navPage === 'segmentation'} onClick={() => { setNavPage('segmentation'); setView('policies'); }} />
-      </SideNavSection>
-      <SideNavSection title="Manage">
-        <SideNavItem label="Label Management" isSelected={navPage === 'labels'} onClick={() => setNavPage('labels')} />
-        <SideNavItem label="Servers & Endpoints" isSelected={navPage === 'servers'} onClick={() => setNavPage('servers')} />
-        <SideNavItem label="Firewalls" isSelected={navPage === 'firewalls'} onClick={() => setNavPage('firewalls')} />
-        <SideNavItem label="Cloud" isSelected={navPage === 'cloud'} onClick={() => setNavPage('cloud')} />
+
+        <SideNavItem label="Explore" isSelected={navPage === 'explore'} onClick={() => setNavPage('explore')} collapsible>
+          <SideNavItem label="Map" onClick={() => {}} />
+          <SideNavItem label="Traffic" onClick={() => {}} />
+          <SideNavItem label="Mesh" onClick={() => {}} />
+        </SideNavItem>
+
+        <SideNavItem label="Segmentation" isSelected={navPage === 'segmentation'} onClick={() => { setNavPage('segmentation'); setView('policies'); }} collapsible>
+          <SideNavItem label="All Policies" isSelected={navPage === 'segmentation' && view === 'policies'} onClick={() => { setNavPage('segmentation'); setView('policies'); }} />
+          <SideNavItem label="Deny Rules" onClick={() => {}} />
+          <SideNavItem label="Drafts and Versions" onClick={() => {}} />
+        </SideNavItem>
+
+        <SideNavItem label="Policy Objects" onClick={() => {}} collapsible>
+          <SideNavItem label="Services" onClick={() => {}} />
+          <SideNavItem label="IP Lists" onClick={() => {}} />
+          <SideNavItem label="User Groups" onClick={() => {}} />
+          <SideNavItem label="Virtual Services" onClick={() => {}} />
+          <SideNavItem label="Virtual Servers" onClick={() => {}} />
+        </SideNavItem>
+
+        <SideNavItem label="Label Management" isSelected={navPage === 'labels'} onClick={() => setNavPage('labels')} collapsible>
+          <SideNavItem label="Labels" onClick={() => {}} />
+          <SideNavItem label="Label Groups" onClick={() => {}} />
+        </SideNavItem>
+
+        <SideNavItem label="Label Method" onClick={() => {}} collapsible>
+          <SideNavItem label="AI Labeling" onClick={() => {}} />
+          <SideNavItem label="Data Center Labeling" onClick={() => {}} />
+          <SideNavItem label="Cloud Labeling Rules" onClick={() => {}} />
+          <SideNavItem label="Tag to Label Mapping" onClick={() => {}} />
+          <SideNavItem label="System Generated Labels" onClick={() => {}} />
+          <SideNavItem label="Label Types" onClick={() => {}} />
+        </SideNavItem>
+
+        <SideNavItem label="Servers & Endpoints" isSelected={navPage === 'servers'} onClick={() => setNavPage('servers')} collapsible>
+          <SideNavItem label="Workloads" onClick={() => {}} />
+          <SideNavItem label="Pairing Profiles" onClick={() => {}} />
+          <SideNavItem label="Applications" onClick={() => {}} />
+        </SideNavItem>
+
+        <SideNavItem label="Firewall" isSelected={navPage === 'firewalls'} onClick={() => setNavPage('firewalls')} />
+
+        <SideNavItem label="Cloud" isSelected={navPage === 'cloud'} onClick={() => setNavPage('cloud')} collapsible>
+          <SideNavItem label="Onboarding" onClick={() => {}} />
+          <SideNavItem label="Security Review" onClick={() => {}} />
+          <SideNavItem label="Inventory" onClick={() => {}} />
+          <SideNavItem label="Explore" onClick={() => {}} collapsible>
+            <SideNavItem label="Map" onClick={() => {}} />
+            <SideNavItem label="Traffic" onClick={() => {}} />
+            <SideNavItem label="Reports" onClick={() => {}} />
+          </SideNavItem>
+          <SideNavItem label="Applications" onClick={() => {}} collapsible>
+            <SideNavItem label="Application Discovery" onClick={() => {}} />
+            <SideNavItem label="Deployments" onClick={() => {}} />
+            <SideNavItem label="Application Definitions" onClick={() => {}} />
+            <SideNavItem label="Discovery Rules" onClick={() => {}} />
+          </SideNavItem>
+          <SideNavItem label="Events" onClick={() => {}} />
+        </SideNavItem>
+
         <SideNavItem label="Usage" isSelected={navPage === 'usage'} onClick={() => setNavPage('usage')} />
       </SideNavSection>
-      <SideNavSection title="System">
-        <SideNavItem label="Access" isSelected={navPage === 'access'} onClick={() => setNavPage('access')} />
-        <SideNavItem label="Settings" isSelected={navPage === 'settings'} onClick={() => setNavPage('settings')} />
-        <SideNavItem label="Support" isSelected={navPage === 'support'} onClick={() => setNavPage('support')} />
+
+      <SideNavSection title="System" isHeaderHidden>
+        <SideNavItem label="Access" isSelected={navPage === 'access'} onClick={() => setNavPage('access')} collapsible>
+          <SideNavItem label="Roles & Permissions" onClick={() => {}} />
+        </SideNavItem>
+        <SideNavItem label="Settings" isSelected={navPage === 'settings'} onClick={() => setNavPage('settings')} collapsible>
+          <SideNavItem label="General" onClick={() => {}} />
+        </SideNavItem>
+        <SideNavItem label="Support" isSelected={navPage === 'support'} onClick={() => setNavPage('support')} collapsible>
+          <SideNavItem label="Documentation" onClick={() => {}} />
+        </SideNavItem>
       </SideNavSection>
     </SideNav>
   );
