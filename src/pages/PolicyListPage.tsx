@@ -4,6 +4,7 @@ import {Button} from '@astryxdesign/core/Button';
 import {Badge} from '@astryxdesign/core/Badge';
 import {Token} from '@astryxdesign/core/Token';
 import {TabList, Tab} from '@astryxdesign/core/TabList';
+import {DropdownMenu, DropdownMenuItem} from '@astryxdesign/core/DropdownMenu';
 import {Table, proportional, pixel} from '@astryxdesign/core/Table';
 import type {TableColumn} from '@astryxdesign/core/Table';
 import type {Policy, PolicyStatus, Persona, EnforcementMode} from '../components/Policy/types';
@@ -118,16 +119,16 @@ export default function PolicyListPage({store, persona, onCreatePolicy, onEditPo
 
   const actionsColumn: TableColumn<PolicyRow> = {
     key: 'actions',
-    header: 'Actions',
-    width: pixel(120),
+    header: '',
+    width: pixel(50),
     renderCell: (row) => {
       const policy = row._policy as Policy;
       if (isOrgTabReadOnly) return <div />;
       return (
-        <div style={{display: 'flex', gap: 'var(--spacing-1)'}}>
-          <Button label="Edit" variant="tertiary" size="sm" onClick={() => onEditPolicy(policy.id)} />
-          <Button label="Delete" variant="tertiary" size="sm" onClick={() => store.deletePolicy(policy.id)} />
-        </div>
+        <DropdownMenu button={{label: 'Actions', variant: 'ghost', size: 'sm', isIconOnly: true}} placement="start">
+          <DropdownMenuItem label="Edit" onClick={() => onEditPolicy(policy.id)} />
+          <DropdownMenuItem label="Delete" onClick={() => store.deletePolicy(policy.id)} />
+        </DropdownMenu>
       );
     },
   };

@@ -3,6 +3,7 @@ import {Table, proportional, pixel} from '@astryxdesign/core/Table';
 import type {TableColumn} from '@astryxdesign/core/Table';
 import {Badge} from '@astryxdesign/core/Badge';
 import {Token} from '@astryxdesign/core/Token';
+import {DropdownMenu, DropdownMenuItem} from '@astryxdesign/core/DropdownMenu';
 import {Button} from '@astryxdesign/core/Button';
 import {Text} from '@astryxdesign/core/Text';
 import {RULE_TYPE_ORDER} from '../../stores/policyStore';
@@ -187,13 +188,13 @@ export default function RulesTable({rules, onEdit, onDelete, onToggleEnabled}: R
     },
     {
       key: 'actions',
-      header: 'Actions',
-      width: pixel(130),
+      header: '',
+      width: pixel(50),
       renderCell: (item: RuleRow) => (
-        <div style={{display: 'flex', gap: 'var(--spacing-1)'}}>
-          <Button label="Edit" variant="tertiary" size="sm" onClick={() => onEdit(item as unknown as Rule)} />
-          <Button label="Delete" variant="tertiary" size="sm" onClick={() => onDelete(item.id)} />
-        </div>
+        <DropdownMenu button={{label: 'Actions', variant: 'ghost', size: 'sm', isIconOnly: true}} placement="start">
+          <DropdownMenuItem label="Edit" onClick={() => onEdit(item as unknown as Rule)} />
+          <DropdownMenuItem label="Delete" onClick={() => onDelete(item.id)} />
+        </DropdownMenu>
       ),
     },
   ], [onEdit, onDelete, onToggleEnabled]);
