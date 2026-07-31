@@ -4,7 +4,7 @@ import type {TableColumn} from '@astryxdesign/core/Table';
 import {Badge} from '@astryxdesign/core/Badge';
 import {Token} from '@astryxdesign/core/Token';
 import {MoreMenu} from '@astryxdesign/core/MoreMenu';
-import {Button} from '@astryxdesign/core/Button';
+import {Switch} from '@astryxdesign/core/Switch';
 import {Text} from '@astryxdesign/core/Text';
 import {RULE_TYPE_ORDER} from '../../stores/policyStore';
 import type {Rule, RuleType, RuleStatus} from './types';
@@ -124,11 +124,11 @@ export default function RulesTable({rules, onEdit, onDelete, onToggleEnabled}: R
       header: 'Enabled',
       width: pixel(70),
       renderCell: (item: RuleRow) => (
-        <Button
-          label={item.enabled ? 'On' : 'Off'}
-          variant="tertiary"
-          size="sm"
-          onClick={() => onToggleEnabled(item.id, !item.enabled)}
+        <Switch
+          label="Enabled"
+          isLabelHidden
+          value={item.enabled}
+          onChange={checked => onToggleEnabled(item.id, checked)}
         />
       ),
     },
